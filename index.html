@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <!-- SEO 基础信息 -->
+    <title><%= siteName %> - 用镜头记录生活的美好瞬间</title>
+    <meta name="description" content="<%= siteDescription %>">
+    <meta name="keywords" content="<%= siteKeywords %>">
+    <meta name="author" content="<%= siteAuthor %>">
+    
+    <!-- 百度站长平台 -->
+    <meta name="baidu-site-verification" content="">
+    <meta name="applicable-device" content="pc,mobile">
+    
+    <!-- 微信分享优化 -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="<%= siteDomain %>/">
+    <meta property="og:title" content="<%= siteTitle %>">
+    <meta property="og:description" content="<%= siteDescription %>">
+    <meta property="og:image" content="<%= siteDomain %><%= siteLogo %>">
+    
+    <!-- 移动端优化 -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    
+    <!-- 网站图标 -->
+    <link rel="icon" type="image/png" href="<%= siteLogo %>">
+    <link rel="apple-touch-icon" href="<%= siteLogo %>">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="<%= siteDomain %>/">
+    
+    <!-- 预连接 DNS -->
+    <link rel="dns-prefetch" href="//api.busuanzi.cc">
+    
+    <!-- 结构化数据 - JSON-LD -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "<%= siteName %>",
+      "url": "<%= siteDomain %>/",
+      "description": "<%= siteDescription %>",
+      "author": {
+        "@type": "Person",
+        "name": "<%= siteAuthor %>"
+      },
+      "inLanguage": "zh-CN"
+    }
+    </script>
+</head>
+<body class="bg-white text-gray-800">
+    <div id="app"></div>
+    <script type="module" src="/src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,413 @@
+/* Tailwind CSS 指令 */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Apple 风格 CSS 变量 - 浅色模式 */
+:root {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f5f5f7;
+  --bg-tertiary: #e8e8ed;
+  --text-primary: #1d1d1f;
+  --text-secondary: #86868b;
+  --text-tertiary: #6e6e73;
+  --border-color: rgba(0, 0, 0, 0.1);
+  --card-bg: #ffffff;
+  --nav-bg: rgba(255, 255, 255, 0.8);
+  --modal-bg: rgba(0, 0, 0, 0.9);
+}
+
+/* Apple 风格 CSS 变量 - 深色模式 */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg-primary: #000000;
+    --bg-secondary: #1d1d1f;
+    --bg-tertiary: #2d2d2d;
+    --text-primary: #f5f5f7;
+    --text-secondary: #a1a1a6;
+    --text-tertiary: #86868b;
+    --border-color: rgba(255, 255, 255, 0.1);
+    --card-bg: #1c1c1e;
+    --nav-bg: rgba(29, 29, 31, 0.8);
+    --modal-bg: rgba(0, 0, 0, 0.95);
+  }
+}
+
+/* 应用背景色 */
+html {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-primary) !important;
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+#app {
+  background-color: var(--bg-primary);
+  min-height: 100vh;
+}
+
+/* 修复 Element Plus 按钮被 Tailwind 覆盖的问题 */
+.el-button--primary {
+  background-color: #409eff !important;
+  border-color: #409eff !important;
+  color: #fff !important;
+}
+
+.el-button--primary:hover {
+  background-color: #66b1ff !important;
+  border-color: #66b1ff !important;
+}
+
+.el-button--success {
+  background-color: #67c23a !important;
+  border-color: #67c23a !important;
+  color: #fff !important;
+}
+
+.el-button--warning {
+  background-color: #e6a23c !important;
+  border-color: #e6a23c !important;
+  color: #fff !important;
+}
+
+.el-button--danger {
+  background-color: #f56c6c !important;
+  border-color: #f56c6c !important;
+  color: #fff !important;
+}
+
+.el-button--danger:hover {
+  background-color: #f78989 !important;
+  border-color: #f78989 !important;
+}
+
+.el-button--info {
+  background-color: #909399 !important;
+  border-color: #909399 !important;
+  color: #fff !important;
+}
+
+/* 确保默认按钮也正常显示 */
+.el-button {
+  color: #606266;
+  background-color: #fff;
+  border-color: #dcdfe6;
+}
+
+/* 全局样式 - 苹果风格字体 */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Helvetica Neue', 'Segoe UI', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* 动画效果 */
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+
+/* 菜单动画 */
+.menu-enter-active,
+.menu-leave-active {
+  transition: max-height 0.3s ease-in-out, opacity 0.3s ease;
+}
+
+.menu-enter-from,
+.menu-leave-to {
+  max-height: 0;
+  opacity: 0;
+  overflow: hidden;
+}
+
+.menu-enter-to,
+.menu-leave-from {
+  max-height: 500px;
+  opacity: 1;
+  overflow: hidden;
+}
+
+/* 按钮动画 */
+.button-enter-active,
+.button-leave-active {
+  transition: transform 0.3s, opacity 0.3s, background-color 0.3s;
+}
+
+.button-enter-from,
+.button-leave-to {
+  transform: scale(0.95);
+  opacity: 0;
+}
+
+.button-enter-to,
+.button-leave-from {
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* 瀑布流布局 - 优化间距 */
+.masonry-grid {
+  column-gap: 1.25rem;
+  width: 100%;
+  margin: 0 auto;
+}
+
+.masonry-item {
+  break-inside: avoid;
+  margin-bottom: 1.25rem;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+@media (min-width: 768px) {
+  .masonry-grid {
+    column-gap: 1.5rem;
+  }
+  
+  .masonry-item {
+    margin-bottom: 1.5rem;
+  }
+}
+
+/* 紧凑视图 - 默认在移动端显示两列 */
+.masonry-grid.compact {
+  column-count: 2;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid.compact {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 768px) {
+  .masonry-grid.compact {
+    column-count: 3;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid.compact {
+    column-count: 4;
+  }
+}
+
+/* 广阔视图 - 移动端显示一列 */
+.masonry-grid.wide {
+  column-count: 1;
+}
+
+@media (min-width: 640px) {
+  .masonry-grid.wide {
+    column-count: 1;
+  }
+}
+
+@media (min-width: 768px) {
+  .masonry-grid.wide {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1024px) {
+  .masonry-grid.wide {
+    column-count: 2;
+  }
+}
+
+@media (min-width: 1280px) {
+  .masonry-grid.wide {
+    column-count: 3;
+  }
+}
+
+/* 加载动画 */
+.loader {
+  width: 48px;
+  height: 48px;
+  border: 5px solid #FFF;
+  border-bottom-color: #3B82F6;
+  border-radius: 50%;
+  display: inline-block;
+  box-sizing: border-box;
+  animation: rotation 1s linear infinite;
+}
+
+@keyframes rotation {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* 内容区域居中 */
+.content-container {
+  width: 100%;
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+@media (min-width: 1536px) {
+  .content-container {
+    max-width: 1600px;
+  }
+}
+
+/* 图片懒加载动画 */
+.lazy-image {
+  opacity: 0;
+  transition: opacity 0.5s ease-in-out;
+}
+
+.lazy-image.loaded {
+  opacity: 1;
+}
+
+/* 全屏查看模式 */
+.fullscreen-view {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.fullscreen-view img {
+  max-width: 95%;
+  max-height: 95%;
+  object-fit: contain;
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+}
+
+.fullscreen-view.active img {
+  transform: scale(1);
+}
+
+/* 模态框图片加载动画 */
+.modal-image-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-image {
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  max-width: 100%;
+  max-height: 70vh;
+  object-fit: contain;
+}
+
+.modal-image.loaded {
+  opacity: 1;
+}
+
+/* 模态框过渡动画 */
+.modal-enter-active,
+.modal-leave-active {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.modal-enter-from,
+.modal-leave-to {
+  opacity: 0;
+  transform: scale(0.95);
+}
+
+/* 卡片悬停效果增强 - 苹果风格 */
+.photo-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.photo-card:hover {
+  transform: translateY(-4px) scale(1.005);
+}
+
+.photo-card:active {
+  transform: translateY(-2px) scale(1.002);
+  transition-duration: 0.15s;
+}
+
+/* 图片加载失败样式 */
+.image-error {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #f3f4f6;
+  width: 100%;
+  height: 100%;
+  min-height: 200px;
+}
+
+/* 美化页脚样式 */
+.footer {
+  background: linear-gradient(to right, #f9fafb, #f3f4f6);
+  border-top: 1px solid #e5e7eb;
+  padding: 2rem 0;
+}
+
+.footer-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.footer-logo {
+  font-weight: bold;
+  font-size: 1.5rem;
+  color: #3B82F6;
+}
+
+.footer-social {
+  display: flex;
+  gap: 1rem;
+}
+
+.footer-social a {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 9999px;
+  background-color: #f3f4f6;
+  color: #4b5563;
+  transition: all 0.3s ease;
+}
+
+.footer-social a:hover {
+  background-color: #3B82F6;
+  color: white;
+  transform: translateY(-3px);
+}
+
+.footer-copyright {
+  color: #6b7280;
+  font-size: 0.875rem;
+  text-align: center;
+  margin-top: 1rem;
+}
+
