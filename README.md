@@ -10,27 +10,31 @@
 
 ### 前台展示
 
-| 首页 | 图片弹窗 |
-|-----|------|
-| ![首页](docs/images/doc1.png) | ![图片弹窗](docs/images/doc2.png) |
+**首页**
+![首页](docs/images/doc1.png)
 
-| 作品集 | 关于我 |
-|-----|------|
-| ![作品集](docs/images/doc3.png) | ![关于我](docs/images/doc4.png) |
+**图片弹窗**
+![图片弹窗](docs/images/doc2.png)
 
-| 深色模式 |
-|-----|
-| ![深色模式](docs/images/doc5.png) |
+**作品集**
+![作品集](docs/images/doc3.png)
+
+**关于我**
+![关于我](docs/images/doc4.png)
+
+**深色模式**
+![深色模式](docs/images/doc5.png)
 
 ### 管理后台
 
-| 图片管理 | 图片新增 |
-|-----|------|
-| ![图片管理](docs/images/doc6.png) | ![图片新增](docs/images/doc7.png) |
+**图片管理**
+![图片管理](docs/images/doc6.png)
 
-| 分类管理 |
-|-----|
-| ![分类管理](docs/images/doc8.png) |
+**图片新增**
+![图片新增](docs/images/doc7.png)
+
+**分类管理**
+![分类管理](docs/images/doc8.png)
 
 ---
 
@@ -42,7 +46,7 @@
 - 点击照片打开详情弹窗
 - 图片懒加载 + 骨架屏动画
 
-### �️ 作品集 
+### 🎨 作品集 
 - 分类筛选标签
 - 瀑布流布局，适配不同尺寸图片
 - 照片数量、拍摄地点统计
