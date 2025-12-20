@@ -234,11 +234,23 @@ onMounted(loadData)
 .categories-manager {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
+/* 操作栏 */
 .action-bar {
-  border-radius: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
+  transition: all 0.3s ease;
+}
+
+.action-bar:hover {
+  box-shadow: var(--admin-shadow-hover);
+}
+
+.action-bar :deep(.el-card__body) {
+  padding: 20px 24px;
 }
 
 .action-bar-content {
@@ -248,91 +260,344 @@ onMounted(loadData)
 }
 
 .total-text {
-  color: #606266;
+  color: var(--admin-text-secondary);
   font-size: 14px;
+  font-weight: 500;
 }
 
+/* Apple 风格按钮 */
+.action-right :deep(.el-button--primary) {
+  background: var(--primary-color);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-right :deep(.el-button--primary:hover) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+}
+
+.action-right :deep(.el-button--primary:active) {
+  transform: translateY(0);
+}
+
+/* 分类卡片网格 */
 .category-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 20px;
 }
 
 .category-card {
-  border-radius: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  background: var(--admin-card-bg);
+}
+
+.category-card:hover {
+  box-shadow: var(--admin-shadow-hover);
+  transform: translateY(-4px);
+  border-color: var(--primary-color);
+}
+
+.category-card :deep(.el-card__body) {
+  padding: 24px;
 }
 
 .card-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
+  gap: 16px;
+  margin-bottom: 16px;
 }
 
 .card-icon {
-  width: 50px;
-  height: 50px;
-  background: linear-gradient(135deg, #409eff 0%, #66b1ff 100%);
-  border-radius: 10px;
+  width: 56px;
+  height: 56px;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-hover) 100%);
+  border-radius: 14px;
   display: flex;
   align-items: center;
   justify-content: center;
   color: #fff;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.3);
+  transition: all 0.3s ease;
+}
+
+.category-card:hover .card-icon {
+  transform: scale(1.05) rotate(5deg);
+  box-shadow: 0 6px 16px rgba(0, 122, 255, 0.4);
 }
 
 .card-info {
   flex: 1;
+  min-width: 0;
 }
 
 .card-name {
-  font-size: 16px;
-  font-weight: 600;
-  color: #303133;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+  margin-bottom: 4px;
+  letter-spacing: -0.3px;
 }
 
 .card-id {
   font-size: 12px;
-  color: #909399;
-  margin-top: 2px;
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+/* 下拉菜单按钮 */
+.card-header :deep(.el-button) {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--admin-border);
+  background: transparent;
+  color: var(--admin-text-secondary);
+  transition: all 0.25s ease;
+}
+
+.card-header :deep(.el-button:hover) {
+  background: var(--admin-hover-bg);
+  border-color: var(--admin-text-secondary);
+  color: var(--admin-text-primary);
+  transform: scale(1.1);
 }
 
 .card-desc {
   font-size: 14px;
-  color: #606266;
+  color: var(--admin-text-secondary);
   line-height: 1.6;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  min-height: 44px;
 }
 
 .card-footer {
-  padding-top: 12px;
-  border-top: 1px solid #ebeef5;
+  padding-top: 16px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.card-footer :deep(.el-tag) {
+  border-radius: 8px;
+  border: none;
+  background: var(--primary-light);
+  color: var(--primary-color);
+  font-weight: 600;
+  padding: 6px 12px;
+}
+
+/* 对话框样式 */
+:deep(.el-dialog) {
+  border-radius: 20px;
+  background: var(--admin-card-bg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.el-dialog__header) {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+:deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-dialog__footer) {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* 表单样式 */
+:deep(.el-form-item__label) {
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  transition: all 0.25s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+:deep(.el-input__wrapper.is-disabled) {
+  background: var(--admin-hover-bg);
+  cursor: not-allowed;
+}
+
+:deep(.el-textarea__inner) {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-textarea__inner:hover) {
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-textarea__inner:focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* 对话框按钮 */
+:deep(.el-dialog__footer .el-button) {
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-weight: 500;
+  border: none;
+}
+
+:deep(.el-dialog__footer .el-button--default) {
+  background: var(--admin-bg);
+  color: var(--admin-text-primary);
+  border: 1px solid var(--admin-border);
+}
+
+:deep(.el-dialog__footer .el-button--default:hover) {
+  background: var(--admin-hover-bg);
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-dialog__footer .el-button--primary) {
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+}
+
+:deep(.el-dialog__footer .el-button--primary:hover) {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
 }
 
 .form-tip {
   font-size: 12px;
-  color: #909399;
-  margin-top: 4px;
+  color: var(--admin-text-secondary);
+  margin-top: 6px;
+  line-height: 1.5;
 }
 
 .icon-link {
-  color: #409eff;
+  color: var(--primary-color);
   text-decoration: none;
-  font-size: 12px;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.25s ease;
+}
+
+.icon-link:hover {
+  color: var(--primary-hover);
+  text-decoration: underline;
 }
 
 .icon-preview {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-  padding: 8px 12px;
-  background: #f5f7fa;
-  border-radius: 4px;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 16px;
+  background: var(--admin-bg);
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
   font-size: 14px;
-  color: #606266;
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+}
+
+.icon-preview :deep(.iconify) {
+  color: var(--primary-color);
+}
+
+/* 下拉菜单样式 */
+:deep(.el-dropdown-menu) {
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow-hover);
+  background: var(--admin-card-bg);
+  padding: 8px;
+}
+
+:deep(.el-dropdown-menu__item) {
+  border-radius: 8px;
+  color: var(--admin-text-primary);
+  padding: 10px 16px;
+  font-size: 14px;
+  transition: all 0.2s ease;
+}
+
+:deep(.el-dropdown-menu__item:hover) {
+  background: var(--admin-hover-bg);
+  color: var(--primary-color);
+}
+
+:deep(.el-dropdown-menu__item.is-divided) {
+  margin-top: 8px;
+  border-top: 1px solid var(--admin-border);
+  padding-top: 16px;
+}
+
+/* 空状态 */
+:deep(.el-empty) {
+  padding: 60px 0;
+}
+
+:deep(.el-empty__description) {
+  color: var(--admin-text-secondary);
+  font-size: 14px;
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .category-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-bar-content {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  
+  .action-right {
+    width: 100%;
+  }
+  
+  .action-right :deep(.el-button) {
+    width: 100%;
+  }
 }
 </style>

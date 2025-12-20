@@ -1,58 +1,70 @@
 <template>
   <div class="max-w-6xl mx-auto">
     <!-- 页面标题 -->
-    <div class="mb-10 md:mb-14">
-      <h1 class="text-[36px] md:text-[48px] font-semibold text-[var(--text-primary)] tracking-tight mb-3">
-        作品集
+    <div class="mb-12 md:mb-16 text-center">
+      <h1 class="text-[48px] md:text-[64px] font-semibold text-[var(--text-primary)] tracking-tight">
+        相簿
       </h1>
-      <p class="text-[17px] md:text-[19px] text-[var(--text-secondary)]">
-        共 {{ photoGallery.length }} 张作品，{{ uniqueLocations }} 个拍摄地点
-      </p>
     </div>
 
-    <!-- 分类筛选 -->
-    <div class="flex items-center gap-3 mb-10 overflow-x-auto pb-2">
-      <button
+    <!-- 相册网格 -->
+    <div v-if="!selectedCategory" class="album-grid">
+      <div
         v-for="category in categoriesList"
         :key="category.id"
-        @click="handleCategoryChange(category.name)"
-        class="category-btn"
-        :class="{ active: selectedCategory === category.name }"
+        @click="openAlbum(category.name)"
+        class="album-card"
       >
-        {{ category.name }}
-      </button>
-    </div>
-
-    <!-- 瀑布流照片墙 -->
-    <div class="masonry-grid">
-      <div
-        v-for="(photo, index) in filteredPhotos"
-        :key="`${selectedCategory}-${index}`"
-        @click="openModal(photo)"
-        class="masonry-item group cursor-pointer"
-      >
-        <div class="rounded-2xl overflow-hidden mb-3 group-hover:scale-[1.02] transition-transform duration-500">
-          <LazyImage
-            :src="photo.thumbnail"
-            :alt="photo.title"
-            :width="photo.width"
-            :height="photo.height"
-          />
+        <!-- 文件夹层叠效果 -->
+        <div class="folder-stack">
+          <!-- 后面的层 -->
+          <div class="folder-layer layer-3">
+            <!-- photo 模式：显示第3张图片 -->
+            <img 
+              v-if="isPhotoMode && getCategoryPhotos(category.name)[2]"
+              :src="getCategoryPhotos(category.name)[2].thumbnail" 
+              :alt="category.name"
+              class="layer-image"
+            />
+            <!-- color 模式或照片不足：显示彩虹渐变 -->
+            <div v-else class="layer-gradient"></div>
+          </div>
+          <div class="folder-layer layer-2">
+            <!-- photo 模式：显示第2张图片 -->
+            <img 
+              v-if="isPhotoMode && getCategoryPhotos(category.name)[1]"
+              :src="getCategoryPhotos(category.name)[1].thumbnail" 
+              :alt="category.name"
+              class="layer-image"
+            />
+            <!-- color 模式或照片不足：显示彩虹渐变 -->
+            <div v-else class="layer-gradient"></div>
+          </div>
+          <!-- 封面照片（第1张） -->
+          <div class="folder-cover">
+            <img 
+              :src="getCategoryPhotos(category.name)[0]?.thumbnail" 
+              :alt="category.name"
+              class="cover-image"
+            />
+          </div>
         </div>
-        <h3 class="text-[15px] md:text-[17px] font-medium text-[var(--text-primary)] mb-1">{{ photo.title }}</h3>
-        <p v-if="photo.location" class="text-[13px] text-[var(--text-secondary)]">{{ photo.location }}</p>
+        
+        <!-- 相册信息 -->
+        <div class="album-info">
+          <h3 class="album-title">{{ category.name }}</h3>
+          <p class="album-count">{{ getCategoryPhotos(category.name).length }} 张照片</p>
+          <p class="album-desc">{{ category.description }}</p>
+        </div>
       </div>
     </div>
 
-    <!-- 空状态 -->
-    <div v-if="filteredPhotos.length === 0" class="text-center py-20">
-      <p class="text-[17px] text-[var(--text-secondary)]">暂无作品</p>
-    </div>
-
-    <!-- 照片弹窗 -->
-    <PhotoModal 
-      :photo="selectedPhoto"
-      @close="closeModal"
+    <!-- 照片弹窗（带缩略图导航） -->
+    <PhotoModal
+      v-if="selectedPhotoIndex !== null"
+      :photos="filteredPhotos"
+      :initialIndex="selectedPhotoIndex"
+      @close="closePhotoModal"
     />
   </div>
 </template>
@@ -60,110 +72,222 @@
 <script>
 import { ref, computed, onMounted } from 'vue'
 import { photoGallery, categories } from '../../data/photos.js'
+import { galleryConfig } from '../../config/index.js'
 import { useSEO } from '../../composables/useSEO.js'
 import PhotoModal from '../../components/PhotoModal.vue'
-import LazyImage from '../../components/LazyImage.vue'
+import { Icon } from '@iconify/vue'
 
 export default {
   name: 'GalleryPage',
   components: {
     PhotoModal,
-    LazyImage
+    Icon
   },
   setup() {
     const { setTitle, setDescription, setKeywords, setCanonical } = useSEO()
     
     const categoriesList = ref(categories)
-    const selectedCategory = ref(categories[0]?.name || '')
-    const selectedPhoto = ref(null)
+    const selectedCategory = ref(null) // null 表示显示相册列表
+    const selectedPhotoIndex = ref(null) // null 表示没有打开照片弹窗
 
     onMounted(() => {
-      setTitle('作品集')
+      setTitle('相簿')
       setDescription('我的摄影作品集，用镜头记录生活中的每一个精彩瞬间。')
-      setKeywords('摄影作品,作品集,照片,生活记录')
+      setKeywords('摄影作品,作品集,照片,生活记录,相簿')
       setCanonical('/gallery')
     })
-
-    const uniqueLocations = computed(() => {
-      const locations = new Set(
-        photoGallery
-          .map(photo => photo.location)
-          .filter(Boolean)
-          .map(loc => loc.split('.')[0])
-      )
-      return locations.size
-    })
+    
+    /**
+     * 判断是否使用照片模式
+     */
+    const isPhotoMode = computed(() => galleryConfig.albumLayerMode === 'photo')
 
     const filteredPhotos = computed(() => {
+      if (!selectedCategory.value) return []
       return photoGallery.filter(photo => photo.category === selectedCategory.value)
     })
 
-    const handleCategoryChange = (category) => {
-      selectedCategory.value = category
+    const openAlbum = (categoryName) => {
+      selectedCategory.value = categoryName
+      // 直接打开第一张照片的弹窗
+      selectedPhotoIndex.value = 0
+    }
+    
+    const getCategoryPhotos = (categoryName) => {
+      return photoGallery.filter(photo => photo.category === categoryName)
     }
 
-    const openModal = (photo) => {
-      selectedPhoto.value = photo
-    }
-
-    const closeModal = () => {
-      selectedPhoto.value = null
+    const closePhotoModal = () => {
+      selectedPhotoIndex.value = null
+      selectedCategory.value = null
     }
 
     return {
       categoriesList,
       selectedCategory,
+      selectedPhotoIndex,
       photoGallery,
-      uniqueLocations,
       filteredPhotos,
-      handleCategoryChange,
-      selectedPhoto,
-      openModal,
-      closeModal
+      openAlbum,
+      getCategoryPhotos,
+      closePhotoModal,
+      isPhotoMode
     }
   }
 }
 </script>
 
 <style scoped>
-.masonry-grid {
-  columns: 1;
-  column-gap: 1.5rem;
+/* 相册网格 */
+.album-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 4rem;
 }
 
 @media (min-width: 640px) {
-  .masonry-grid {
-    columns: 2;
+  .album-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (min-width: 1024px) {
-  .masonry-grid {
-    columns: 3;
+  .album-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 
-.masonry-item {
-  break-inside: avoid;
+/* 相册卡片 */
+.album-card {
+  cursor: pointer;
+  transition: transform 0.3s ease;
+}
+
+/* 文件夹层叠效果 */
+.folder-stack {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4/3;
   margin-bottom: 1.5rem;
 }
 
-.category-btn {
-  padding: 0.5rem 1.25rem;
-  font-size: 15px;
-  border-radius: 9999px;
-  white-space: nowrap;
-  transition: all 0.2s;
-  background: var(--bg-secondary);
+.folder-layer {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.layer-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.85;
+}
+
+.layer-gradient {
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, 
+    rgba(255, 107, 107, 0.85) 0%,
+    rgba(255, 159, 64, 0.85) 20%,
+    rgba(255, 234, 167, 0.85) 40%,
+    rgba(72, 219, 251, 0.85) 60%,
+    rgba(118, 75, 162, 0.85) 80%,
+    rgba(255, 107, 107, 0.85) 100%
+  );
+  opacity: 0.5;
+}
+
+.folder-layer.layer-3 {
+  top: -8px;
+  left: -8px;
+  transform: rotate(-3deg);
+}
+
+.folder-layer.layer-2 {
+  top: -4px;
+  left: -4px;
+  transform: rotate(-1.5deg);
+}
+
+.folder-cover {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* 悬停效果 */
+.album-card:hover .folder-layer.layer-3 {
+  top: -16px;
+  left: -16px;
+  transform: rotate(-6deg);
+}
+
+.album-card:hover .folder-layer.layer-2 {
+  top: -8px;
+  left: -8px;
+  transform: rotate(-3deg);
+}
+
+.album-card:hover .layer-image {
+  opacity: 1;
+}
+
+.album-card:hover .layer-gradient {
+  opacity: 0.7;
+}
+
+.album-card:hover .folder-cover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+}
+
+/* 相册信息 */
+.album-info {
+  padding: 0 0.5rem;
+}
+
+.album-title {
+  font-size: 20px;
+  font-weight: 600;
   color: var(--text-primary);
+  margin-bottom: 0.5rem;
+  transition: color 0.2s;
 }
 
-.category-btn:hover {
-  background: var(--bg-tertiary);
+.album-card:hover .album-title {
+  color: #ff2d55;
 }
 
-.category-btn.active {
-  background: var(--text-primary);
-  color: var(--bg-primary);
+.album-count {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin-bottom: 0.75rem;
 }
+
+.album-desc {
+  font-size: 14px;
+  color: var(--text-tertiary);
+  line-height: 1.6;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
 </style>

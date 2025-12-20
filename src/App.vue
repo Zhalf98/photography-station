@@ -17,6 +17,9 @@
 
     <!-- 回到顶部 -->
     <BackToTop />
+
+    <!-- 浏览器提示 -->
+    <BrowserToast />
   </div>
 </template>
 
@@ -26,13 +29,15 @@ import { useRoute } from 'vue-router'
 import HeaderNav from './components/HeaderNav.vue'
 import FooterSection from './components/FooterSection.vue'
 import BackToTop from './components/BackToTop.vue'
+import BrowserToast from './components/BrowserToast.vue'
 
 export default {
   name: 'App',
   components: {
     HeaderNav,
     FooterSection,
-    BackToTop
+    BackToTop,
+    BrowserToast
   },
   setup() {
     const route = useRoute()

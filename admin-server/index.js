@@ -8,6 +8,13 @@ import { fileURLToPath } from 'url'
 import fs from 'fs/promises'
 import sharp from 'sharp'
 import exifr from 'exifr'
+import ffmpeg from 'fluent-ffmpeg'
+import ffmpegPath from '@ffmpeg-installer/ffmpeg'
+import ffprobePath from '@ffprobe-installer/ffprobe'
+
+// 配置 ffmpeg 和 ffprobe 路径
+ffmpeg.setFfmpegPath(ffmpegPath.path)
+ffmpeg.setFfprobePath(ffprobePath.path)
 
 // 加载 .env 文件（从 admin-server 目录）
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -31,6 +38,7 @@ app.use('/uploads', express.static(UPLOADS_DIR))
 async function ensureUploadDirs() {
   await fs.mkdir(path.join(UPLOADS_DIR, 'original'), { recursive: true })
   await fs.mkdir(path.join(UPLOADS_DIR, 'thumbnail'), { recursive: true })
+  await fs.mkdir(path.join(UPLOADS_DIR, 'live'), { recursive: true })
 }
 ensureUploadDirs()
 
@@ -38,12 +46,12 @@ ensureUploadDirs()
 const storage = multer.memoryStorage()
 const upload = multer({ 
   storage,
-  limits: { fileSize: 50 * 1024 * 1024 }, // 50MB
+  limits: { fileSize: 100 * 1024 * 1024 }, // 100MB（支持视频）
   fileFilter: (req, file, cb) => {
-    if (file.mimetype.startsWith('image/')) {
+    if (file.mimetype.startsWith('image/') || file.mimetype.startsWith('video/')) {
       cb(null, true)
     } else {
-      cb(new Error('只支持图片文件'))
+      cb(new Error('只支持图片和视频文件'))
     }
   }
 })
@@ -188,8 +196,14 @@ app.delete('/api/photos/:index', async (req, res) => {
           await fs.unlink(thumbnailPath).catch(() => {})
           console.log('删除缩略图:', thumbnailPath)
         }
+        // 删除视频（Live Photo）
+        if (photo.live_video) {
+          const videoPath = path.join(ROOT_DIR, photo.live_video)
+          await fs.unlink(videoPath).catch(() => {})
+          console.log('删除视频:', videoPath)
+        }
       } catch (e) {
-        console.warn('删除图片文件失败:', e.message)
+        console.warn('删除文件失败:', e.message)
       }
       
       // 从数据中移除
@@ -204,17 +218,96 @@ app.delete('/api/photos/:index', async (req, res) => {
   }
 })
 
-// 上传图片
-app.post('/api/upload', upload.single('image'), async (req, res) => {
+// 临时上传接口（用于预览）
+app.post('/api/upload-temp', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+]), async (req, res) => {
   try {
-    if (!req.file) {
+    if (!req.files || !req.files['image']) {
       return res.status(400).json({ error: '没有上传文件' })
     }
 
-    const buffer = req.file.buffer
+    const imageFile = req.files['image'][0]
+    const videoFile = req.files['video']?.[0]
+    
     const randomId = crypto.randomBytes(8).toString('hex')
-    const ext = path.extname(req.file.originalname).toLowerCase() || '.jpg'
+    const ext = path.extname(imageFile.originalname).toLowerCase() || '.jpg'
+    
+    // 保存到 temp 目录
+    const imageName = `${randomId}${ext}`
+    const imagePath = path.join(UPLOADS_DIR, 'temp', imageName)
+    await fs.writeFile(imagePath, imageFile.buffer)
+    
+    let videoUrl = null
+    
+    if (videoFile) {
+      const videoName = `${randomId}.mp4`
+      const videoPath = path.join(UPLOADS_DIR, 'temp', videoName)
+      
+      // 保存原始视频
+      await fs.writeFile(videoPath, videoFile.buffer)
+      videoUrl = `/uploads/temp/${videoName}`
+      console.log(`✅ 临时保存视频: ${videoName}`)
+    }
+    
+    res.json({
+      success: true,
+      imageUrl: `/uploads/temp/${imageName}`,
+      videoUrl,
+      tempId: randomId
+    })
+  } catch (error) {
+    console.error('临时上传失败:', error)
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// 删除临时文件
+app.delete('/api/upload-temp/:tempId', async (req, res) => {
+  try {
+    const { tempId } = req.params
+    const files = await fs.readdir(path.join(UPLOADS_DIR, 'temp'))
+    
+    for (const file of files) {
+      if (file.startsWith(tempId)) {
+        await fs.unlink(path.join(UPLOADS_DIR, 'temp', file)).catch(() => {})
+      }
+    }
+    
+    res.json({ success: true })
+  } catch (error) {
+    res.status(500).json({ error: error.message })
+  }
+})
+
+// 上传图片（支持 Live Photo）
+app.post('/api/upload', upload.fields([
+  { name: 'image', maxCount: 1 },
+  { name: 'video', maxCount: 1 }
+]), async (req, res) => {
+  try {
+    if (!req.files || !req.files['image']) {
+      return res.status(400).json({ error: '没有上传文件' })
+    }
+
+    const imageFile = req.files['image'][0]
+    const videoFile = req.files['video']?.[0]
+    
+    const buffer = imageFile.buffer
+    const randomId = crypto.randomBytes(8).toString('hex')
+    const ext = path.extname(imageFile.originalname).toLowerCase() || '.jpg'
     const baseName = randomId
+    
+    // 优先使用前端传来的检测结果
+    let isHDR = req.body.is_hdr === 'true'
+    let isLivePhoto = req.body.is_live_photo === 'true'
+    const source = req.body.source || 'normal'
+    
+    console.log(`📷 图片: ${imageFile.originalname}`)
+    console.log(`   来源: ${source}`)
+    console.log(`   Live Photo: ${isLivePhoto}`)
+    console.log(`   HDR: ${isHDR}`)
     
     // 读取 EXIF 信息
     let exifData = {}
@@ -233,25 +326,81 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       console.warn('EXIF 读取失败:', e.message)
     }
 
-    // 保存原图
+    // 保存原图（需要旋转以修正 EXIF 方向）
     const originalName = `${baseName}${ext}`
     const originalPath = path.join(UPLOADS_DIR, 'original', originalName)
-    await fs.writeFile(originalPath, buffer)
+    
+    // 使用 Sharp 处理原图：保留元数据 + 自动旋转
+    const originalInfo = await sharp(buffer)
+      .withMetadata() // 保留 HDR 元数据（GainMap）
+      .rotate() // 根据 EXIF 方向自动旋转
+      .jpeg({ quality: 95 }) // 高质量保存
+      .toFile(originalPath)
 
-    // 读取原图尺寸
+    // 读取原图尺寸和色彩空间
+    const originalWidth = originalInfo.width
+    const originalHeight = originalInfo.height
     const metadata = await sharp(buffer).metadata()
-    const originalWidth = metadata.width
-    const originalHeight = metadata.height
+    const colorSpace = metadata.space || 'srgb'
 
-    // 生成缩略图 (压缩到约1MB，宽度限制800px)
+    // 生成缩略图
     const thumbnailName = `${baseName}_small${ext}`
     const thumbnailPath = path.join(UPLOADS_DIR, 'thumbnail', thumbnailName)
     
     const thumbnailInfo = await sharp(buffer)
-      .rotate() // 自动根据EXIF方向旋转
+      .withMetadata() // 保留 HDR 元数据（GainMap）
+      .rotate()
       .resize(800, null, { withoutEnlargement: true })
       .jpeg({ quality: 80 })
       .toFile(thumbnailPath)
+
+    // 处理视频（Live Photo）
+    let videoData = null
+    if (videoFile) {
+      const videoName = `${baseName}.mp4`
+      const videoNameH264 = `${baseName}_h264.mp4`
+      const videoPath = path.join(UPLOADS_DIR, 'live', videoName)
+      const videoPathH264 = path.join(UPLOADS_DIR, 'live', videoNameH264)
+      
+      // 保存原始视频文件（H.265）
+      await fs.writeFile(videoPath, videoFile.buffer)
+      console.log(`✅ 保存原始视频: ${videoName}`)
+      
+      // 检测视频编码格式
+      const videoCodec = await detectVideoCodec(videoPath)
+      console.log(`📹 视频编码: ${videoCodec}`)
+      
+      // 如果是 H.265，转码为 H.264 兼容版本
+      let h264Path = null
+      if (videoCodec === 'hevc' || videoCodec === 'h265') {
+        console.log('🔄 开始转码 H.265 → H.264...')
+        try {
+          await transcodeToH264(videoPath, videoPathH264)
+          h264Path = `/uploads/live/${videoNameH264}`
+          console.log(`✅ H.264 转码完成: ${videoNameH264}`)
+        } catch (e) {
+          console.error('❌ 转码失败:', e.message)
+        }
+      }
+      
+      // 获取视频信息
+      const { getVideoDurationInSeconds } = await import('get-video-duration')
+      let duration = 0
+      try {
+        duration = await getVideoDurationInSeconds(videoPath)
+      } catch (e) {
+        console.warn('获取视频时长失败:', e.message)
+      }
+      
+      videoData = {
+        path: `/uploads/live/${videoName}`,
+        pathH264: h264Path, // H.264 兼容版本
+        codec: videoCodec,
+        duration: duration.toFixed(2),
+        size: (videoFile.size / 1024 / 1024).toFixed(2),
+        hasAudio: true
+      }
+    }
 
     // 提取相机信息
     const cameraInfo = extractCameraInfo(exifData)
@@ -263,6 +412,16 @@ app.post('/api/upload', upload.single('image'), async (req, res) => {
       thumbnail: `/uploads/thumbnail/${thumbnailName}`,
       width: thumbnailInfo.width,
       height: thumbnailInfo.height,
+      is_hdr: isHDR, // 使用前端传来的检测结果
+      color_space: colorSpace,
+      is_live_photo: isLivePhoto, // 使用前端传来的检测结果
+      source: source,
+      live_video: videoData?.path,
+      live_video_h264: videoData?.pathH264, // H.264 兼容版本
+      live_codec: videoData?.codec,
+      live_duration: videoData?.duration,
+      live_file_size: videoData?.size,
+      live_has_audio: videoData?.hasAudio,
       exif: {
         cameraInfo,
         gps: gpsInfo
@@ -368,8 +527,60 @@ function extractGPS(exifData) {
   return null
 }
 
+// 检测视频编码格式
+function detectVideoCodec(videoPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg.ffprobe(videoPath, (err, metadata) => {
+      if (err) {
+        reject(err)
+        return
+      }
+      
+      const videoStream = metadata.streams.find(s => s.codec_type === 'video')
+      if (videoStream) {
+        resolve(videoStream.codec_name)
+      } else {
+        reject(new Error('未找到视频流'))
+      }
+    })
+  })
+}
+
+// 转码为 H.264
+function transcodeToH264(inputPath, outputPath) {
+  return new Promise((resolve, reject) => {
+    ffmpeg(inputPath)
+      .videoCodec('libx264')
+      .audioCodec('aac')
+      .outputOptions([
+        '-crf 23',           // 质量控制（18-28，越小质量越好）
+        '-preset medium',    // 编码速度（ultrafast/fast/medium/slow）
+        '-movflags +faststart', // 优化网络播放
+        '-pix_fmt yuv420p'   // 兼容性像素格式
+      ])
+      .on('start', (cmd) => {
+        console.log('🎬 FFmpeg 命令:', cmd)
+      })
+      .on('progress', (progress) => {
+        if (progress.percent) {
+          console.log(`⏳ 转码进度: ${Math.round(progress.percent)}%`)
+        }
+      })
+      .on('end', () => {
+        console.log('✅ 转码完成')
+        resolve()
+      })
+      .on('error', (err) => {
+        console.error('❌ 转码错误:', err.message)
+        reject(err)
+      })
+      .save(outputPath)
+  })
+}
+
 // 启动服务
 const PORT = 3001
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`✅ API 服务已启动 (端口 ${PORT})`)
+  console.log(`   局域网访问: http://<你的IP>:${PORT}`)
 })

@@ -4,7 +4,7 @@
   <!-- 首页 -->
   <url>
     <loc>https://p.javai.cn/</loc>
-    <lastmod>2025-12-06</lastmod>
+    <lastmod>2025-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
@@ -12,7 +12,7 @@
   <!-- 作品集页面 -->
   <url>
     <loc>https://p.javai.cn/gallery</loc>
-    <lastmod>2025-12-06</lastmod>
+    <lastmod>2025-12-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
@@ -20,7 +20,7 @@
   <!-- 关于我页面 -->
   <url>
     <loc>https://p.javai.cn/about</loc>
-    <lastmod>2025-12-06</lastmod>
+    <lastmod>2025-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
@@ -28,7 +28,7 @@
   <!-- 联系方式页面 -->
   <url>
     <loc>https://p.javai.cn/contact</loc>
-    <lastmod>2025-12-06</lastmod>
+    <lastmod>2025-12-19</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
   </url>

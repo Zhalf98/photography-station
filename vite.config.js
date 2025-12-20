@@ -1,13 +1,14 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 import { createHtmlPlugin } from 'vite-plugin-html'
+import { viteStaticCopy } from 'vite-plugin-static-copy'
 import { fileURLToPath, URL } from 'node:url'
 
 // 导入站点配置
 import { siteConfig } from './src/config/index.js'
 
 // https://vitejs.dev/config/
-export default defineConfig(({ mode }) => ({
+export default defineConfig(() => ({
   plugins: [
     vue(),
     createHtmlPlugin({
@@ -25,6 +26,14 @@ export default defineConfig(({ mode }) => ({
         },
       },
     }),
+    viteStaticCopy({
+      targets: [
+        {
+          src: 'uploads',
+          dest: ''
+        }
+      ]
+    }),
   ],
   resolve: {
     alias: {
@@ -32,6 +41,7 @@ export default defineConfig(({ mode }) => ({
     }
   },
   server: {
+    host: '0.0.0.0', // 监听所有网络接口，允许局域网访问
     port: 3000,
     open: true,
     proxy: {

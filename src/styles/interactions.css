@@ -1,0 +1,385 @@
+/**
+ * Apple 风格交互样式
+ * 统一管理所有交互效果
+ */
+
+/* ==================== CSS 变量 ==================== */
+:root {
+  /* 缓动函数 */
+  --ease-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.6, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  --ease-smooth: cubic-bezier(0.25, 0.1, 0.25, 1);
+  
+  /* 时间 */
+  --duration-fast: 150ms;
+  --duration-normal: 250ms;
+  --duration-slow: 350ms;
+  
+  /* 变换 */
+  --scale-hover: 1.05;
+  --scale-active: 0.95;
+  --scale-press: 0.98;
+  --translate-hover: -2px;
+  
+  /* 阴影 */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* ==================== 按钮交互 ==================== */
+
+/* 主要按钮 */
+.btn-interactive {
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-interactive:hover {
+  transform: translateY(var(--translate-hover));
+  box-shadow: var(--shadow-md);
+}
+
+.btn-interactive:active {
+  transform: scale(var(--scale-active));
+  box-shadow: var(--shadow-sm);
+  transition-duration: var(--duration-fast);
+}
+
+/* 次要按钮 */
+.btn-secondary-interactive {
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-secondary-interactive:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-secondary-interactive:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.btn-secondary-interactive:active {
+  transform: scale(var(--scale-active));
+  transition-duration: var(--duration-fast);
+}
+
+/* 图标按钮 */
+.btn-icon-interactive {
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.btn-icon-interactive:hover {
+  transform: scale(1.1);
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+@media (prefers-color-scheme: dark) {
+  .btn-icon-interactive:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+  }
+}
+
+.btn-icon-interactive:active {
+  transform: scale(0.9);
+  transition-duration: var(--duration-fast);
+}
+
+/* ==================== 卡片交互 ==================== */
+
+.card-interactive {
+  position: relative;
+  transition: all var(--duration-slow) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.card-interactive:hover {
+  transform: translateY(-4px) scale(1.005);
+  box-shadow: var(--shadow-lg);
+}
+
+.card-interactive:active {
+  transform: translateY(-2px) scale(var(--scale-press));
+  box-shadow: var(--shadow-md);
+  transition-duration: var(--duration-fast);
+}
+
+/* ==================== 链接交互 ==================== */
+
+.link-interactive {
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.link-interactive:hover {
+  transform: scale(var(--scale-hover));
+  opacity: 0.8;
+}
+
+.link-interactive:active {
+  transform: scale(1);
+  transition-duration: var(--duration-fast);
+}
+
+/* 带下划线的链接 */
+.link-underline-interactive {
+  position: relative;
+  transition: color var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.link-underline-interactive::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 50%;
+  width: 0;
+  height: 2px;
+  background: currentColor;
+  transition: all var(--duration-normal) var(--ease-out);
+  transform: translateX(-50%);
+}
+
+.link-underline-interactive:hover::after {
+  width: 100%;
+}
+
+/* ==================== 标签交互 ==================== */
+
+.tag-interactive {
+  position: relative;
+  transition: all var(--duration-normal) var(--ease-out);
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  overflow: hidden;
+}
+
+.tag-interactive:hover {
+  transform: scale(1.05);
+  box-shadow: var(--shadow-sm);
+}
+
+.tag-interactive:active {
+  transform: scale(0.95);
+  transition-duration: var(--duration-fast);
+}
+
+/* 选中状态 */
+.tag-interactive.active {
+  font-weight: 600;
+}
+
+/* ==================== 输入框交互 ==================== */
+
+.input-interactive {
+  transition: all var(--duration-normal) var(--ease-out);
+}
+
+.input-interactive:focus {
+  transform: scale(1.01);
+  box-shadow: var(--shadow-md);
+}
+
+/* ==================== 涟漪效果 ==================== */
+
+.ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width var(--duration-slow) var(--ease-out),
+              height var(--duration-slow) var(--ease-out),
+              opacity var(--duration-slow) var(--ease-out);
+  opacity: 0;
+}
+
+.ripple:active::before {
+  width: 300px;
+  height: 300px;
+  opacity: 0.3;
+  transition-duration: 0s;
+}
+
+/* ==================== 加载动画 ==================== */
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.skeleton-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  background-size: 1000px 100%;
+  animation: shimmer 2s infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .skeleton-shimmer {
+    background: linear-gradient(
+      90deg,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0.05) 20%,
+      rgba(255, 255, 255, 0.1) 60%,
+      rgba(255, 255, 255, 0) 100%
+    );
+  }
+}
+
+/* ==================== 脉冲动画 ==================== */
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+.pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* ==================== 弹跳动画 ==================== */
+
+@keyframes bounce-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  70% {
+    transform: scale(0.9);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.bounce-in {
+  animation: bounce-in var(--duration-slow) var(--ease-bounce);
+}
+
+/* ==================== 淡入上移 ==================== */
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.fade-in-up {
+  animation: fade-in-up var(--duration-slow) var(--ease-out);
+}
+
+/* ==================== 抖动动画 ==================== */
+
+@keyframes shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-5px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(5px);
+  }
+}
+
+.shake {
+  animation: shake 0.5s var(--ease-out);
+}
+
+/* ==================== 旋转加载 ==================== */
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+/* ==================== 禁用状态 ==================== */
+
+.disabled,
+[disabled] {
+  opacity: 0.5;
+  cursor: not-allowed !important;
+  pointer-events: none;
+}
+
+/* ==================== 移动端优化 ==================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* 移动端：移除 hover 效果，只保留 active */
+  .btn-interactive:hover,
+  .card-interactive:hover,
+  .link-interactive:hover,
+  .tag-interactive:hover {
+    transform: none;
+    box-shadow: none;
+  }
+  
+  /* 增强 active 反馈 */
+  .btn-interactive:active,
+  .card-interactive:active {
+    transform: scale(0.95);
+  }
+}

@@ -15,7 +15,7 @@
         <div class="inline-flex rounded-[10px] bg-gray-100/80 p-0.5">
           <button 
             @click="$emit('set-view-mode', 'compact')"
-            class="px-4 py-2 text-[13px] font-normal rounded-[8px] transition-all duration-300 ease-out"
+            class="px-4 py-2 text-[13px] font-normal rounded-[8px] btn-secondary-interactive transition-all duration-300 ease-out"
             :class="viewMode === 'compact' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
           >
             <span class="flex items-center gap-2">
@@ -25,7 +25,7 @@
           </button>
           <button 
             @click="$emit('set-view-mode', 'wide')"
-            class="px-4 py-2 text-[13px] font-normal rounded-[8px] transition-all duration-300 ease-out"
+            class="px-4 py-2 text-[13px] font-normal rounded-[8px] btn-secondary-interactive transition-all duration-300 ease-out"
             :class="viewMode === 'wide' ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-600 hover:text-gray-900'"
           >
             <span class="flex items-center gap-2">
@@ -42,7 +42,7 @@
       <div 
         v-for="(photo, index) in photos" 
         :key="index" 
-        class="masonry-item cursor-pointer"
+        class="masonry-item card-interactive"
         @click="$emit('open-photo', photo)"
       >
         <div class="photo-card bg-white overflow-hidden rounded-[12px] border border-gray-200/60 hover:border-gray-300/80 transition-all duration-300 ease-out hover:shadow-lg">
@@ -69,6 +69,18 @@
               @error="handleImageError(index)"
             />
 
+            <!-- 左上角 LIVE 图标 -->
+            <div v-if="photo.is_live_photo" class="live-indicator">
+              <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+                <!-- 外围虚线圆 -->
+                <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"/>
+                <!-- 中间实心圆 -->
+                <circle cx="16" cy="16" r="8" stroke="currentColor" stroke-width="2"/>
+                <!-- 中心点 -->
+                <circle cx="16" cy="16" r="3" fill="currentColor"/>
+              </svg>
+            </div>
+
             <!-- 图片悬停信息 -->
             <div
               class="absolute inset-0 bg-gradient-to-t from-black/60 via-black/0 to-transparent opacity-0 hover:opacity-100 transition-all duration-500 ease-out flex items-end"
@@ -82,10 +94,16 @@
           </div>
 
           <div class="p-3.5 md:p-4 photo-info">
-            <!-- 标题 -->
-            <h3 class="font-semibold text-[14px] md:text-[15px] mb-2 text-gray-900 tracking-tight line-clamp-1">
-              {{ photo.title }}
-            </h3>
+            <!-- 标题和标签 -->
+            <div class="flex items-center gap-2 mb-2">
+              <h3 class="font-semibold text-[14px] md:text-[15px] text-gray-900 tracking-tight line-clamp-1 flex-1">
+                {{ photo.title }}
+              </h3>
+              <div v-if="photo.is_live_photo || photo.is_hdr" class="flex gap-1.5 flex-shrink-0">
+                <span v-if="photo.is_live_photo" class="badge badge-live">LIVE</span>
+                <span v-if="photo.is_hdr" class="badge badge-hdr">HDR</span>
+              </div>
+            </div>
             
             <!-- 信息行 - 紧凑布局 -->
             <div class="space-y-1">
@@ -174,3 +192,82 @@ export default {
 }
 </script>
 
+
+
+<style scoped>
+/* 左上角 LIVE 同心圆图标 */
+.live-indicator {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  color: #1d1d1f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.live-indicator svg {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .live-indicator {
+    background: rgba(28, 28, 30, 0.95);
+    color: #f5f5f7;
+  }
+}
+
+/* 标题右侧标签 */
+.badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.badge-live {
+  background: #86868b;
+  color: white;
+}
+
+.badge-hdr {
+  background: #ffcc00;
+  color: #1d1d1f;
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .badge-live {
+    background: rgba(255, 255, 255, 0.2);
+    color: #f5f5f7;
+  }
+}
+
+/* 悬停效果 */
+.photo-card:hover .live-indicator {
+  transform: scale(1.1);
+}
+</style>

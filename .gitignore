@@ -34,3 +34,6 @@ admin-server/.env
 # 如需忽略本地上传的图片，可取消下面的注释
 # uploads/
 
+# 临时上传目录（预览用）
+uploads/temp/
+

@@ -36,11 +36,12 @@
           <template #default="{ row }">
             <el-image 
               :src="row.thumbnail" 
+              :preview-src-list="[row.image_src]"
+              :preview-teleported="true"
               fit="cover"
               class="thumb-img"
               lazy
-              :preview-src-list="[row.image_src]"
-              preview-teleported
+              style="cursor: pointer;"
             >
               <template #error>
                 <div class="image-error">
@@ -58,6 +59,18 @@
         <el-table-column prop="category" label="分类" width="80">
           <template #default="{ row }">
             <el-tag size="small">{{ row.category }}</el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column label="类型" width="100">
+          <template #default="{ row }">
+            <div style="display: flex; gap: 4px; flex-wrap: wrap;">
+              <el-tag v-if="row.is_live_photo" type="success" size="small">
+                Live
+              </el-tag>
+              <el-tag v-if="row.is_hdr" type="warning" size="small">
+                HDR
+              </el-tag>
+            </div>
           </template>
         </el-table-column>
         <el-table-column label="描述">
@@ -99,115 +112,26 @@
       </div>
     </el-card>
 
-    <!-- 上传对话框 -->
-    <el-dialog v-model="showUploadDialog" title="上传图片" width="650px" @closed="resetUploadForm">
-      <el-form :model="uploadForm" label-width="80px">
-        <el-form-item label="选择图片" required>
-          <div class="upload-wrapper">
-            <!-- 未选择图片时显示上传区域 -->
-            <el-upload
-              v-if="!uploadForm.previewUrl"
-              ref="uploadRef"
-              drag
-              :auto-upload="false"
-              :limit="1"
-              :on-change="handleFileChange"
-              :on-remove="handleFileRemove"
-              accept="image/*"
-              class="upload-area"
-              :show-file-list="false"
-            >
-              <el-icon class="el-icon--upload"><UploadFilled /></el-icon>
-              <div class="el-upload__text">拖拽图片到此处，或 <em>点击上传</em></div>
-              <template #tip>
-                <div class="el-upload__tip">支持 jpg/png/webp 格式，建议不超过 10MB</div>
-              </template>
-            </el-upload>
-            <!-- 已选择图片时显示预览 -->
-            <div v-else class="image-preview">
-              <el-image :src="uploadForm.previewUrl" fit="contain" class="preview-img" />
-              <div class="preview-actions">
-                <el-button type="danger" size="small" @click="removeImage">
-                  <el-icon><Delete /></el-icon> 移除
-                </el-button>
-              </div>
-            </div>
-          </div>
-        </el-form-item>
-
-        <!-- EXIF 信息预览 -->
-        <el-form-item v-if="uploadForm.exifInfo" label="EXIF信息">
-          <div class="exif-preview">
-            <!-- 第一行：型号 + 地点 -->
-            <div class="exif-row">
-              <div class="exif-item flex-2">
-                <span class="exif-label">型号：</span>
-                <span class="exif-value">{{ uploadForm.exifInfo.model || '-' }}</span>
-              </div>
-              <div class="exif-item flex-1">
-                <span class="exif-label">地点：</span>
-                <span class="exif-value">
-                  <span v-if="uploadForm.exifInfo.location">{{ uploadForm.exifInfo.location }}</span>
-                  <span v-else-if="uploadForm.exifInfo.gps" class="loading-text">定位中...</span>
-                  <span v-else>-</span>
-                </span>
-              </div>
-            </div>
-            <!-- 第二行：焦距 + 光圈 + 快门 -->
-            <div class="exif-row">
-              <div class="exif-item flex-1">
-                <span class="exif-label">焦距：</span>
-                <span class="exif-value">{{ uploadForm.exifInfo.focalLength || '-' }}</span>
-              </div>
-              <div class="exif-item flex-1">
-                <span class="exif-label">光圈：</span>
-                <span class="exif-value">{{ uploadForm.exifInfo.aperture || '-' }}</span>
-              </div>
-              <div class="exif-item flex-1">
-                <span class="exif-label">快门：</span>
-                <span class="exif-value">{{ uploadForm.exifInfo.shutterSpeed || '-' }}</span>
-              </div>
-            </div>
-          </div>
-        </el-form-item>
-        <el-form-item label="标题" required>
-          <el-input v-model="uploadForm.title" placeholder="请输入图片标题" />
-        </el-form-item>
-        <el-form-item label="分类" required>
-          <el-select v-model="uploadForm.category" placeholder="选择分类" style="width: 100%">
-            <el-option 
-              v-for="cat in categories" 
-              :key="cat.id" 
-              :label="cat.name" 
-              :value="cat.name" 
-            />
-          </el-select>
-        </el-form-item>
-        <el-form-item label="描述">
-          <el-input v-model="uploadForm.describe" type="textarea" :rows="4" placeholder="图片描述（可选）" />
-        </el-form-item>
-      </el-form>
-
-      <template #footer>
-        <el-button @click="showUploadDialog = false">取消</el-button>
-        <el-button type="primary" :loading="uploading" @click="submitUpload">
-          {{ uploading ? '上传中...' : '确认上传' }}
-        </el-button>
-      </template>
-    </el-dialog>
+    <!-- 上传对话框（支持 Live Photo） -->
+    <LivePhotoUpload
+      v-model="showUploadDialog"
+      :categories="categories"
+      @success="loadPhotos"
+    />
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑图片" width="700px">
-      <el-form :model="editForm" label-width="80px">
-        <el-row :gutter="20">
+    <el-dialog v-model="showEditDialog" title="编辑图片" width="750px">
+      <el-form :model="editForm" label-width="70px" size="default">
+        <!-- 基本信息 -->
+        <el-row :gutter="16">
           <el-col :span="12">
             <el-form-item label="标题">
-              <el-input v-model="editForm.title" />
+              <el-input v-model="editForm.title" placeholder="请输入标题" />
             </el-form-item>
           </el-col>
           <el-col :span="12">
             <el-form-item label="分类">
-              <el-select v-model="editForm.category" style="width: 100%">
+              <el-select v-model="editForm.category" placeholder="选择分类" style="width: 100%">
                 <el-option 
                   v-for="cat in categories" 
                   :key="cat.id" 
@@ -218,79 +142,118 @@
             </el-form-item>
           </el-col>
         </el-row>
+        
         <el-form-item label="描述">
-          <el-input v-model="editForm.describe" type="textarea" :rows="3" />
+          <el-input v-model="editForm.describe" type="textarea" :rows="2" placeholder="图片描述（可选）" />
         </el-form-item>
-        <el-divider content-position="left">EXIF 信息</el-divider>
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="型号">
-              <el-input v-model="editForm.model" placeholder="如: vivo X200 Pro" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="地点">
-              <el-input v-model="editForm.location" placeholder="如: 广东.深圳" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-row :gutter="20">
-          <el-col :span="8">
-            <el-form-item label="焦距">
-              <el-input v-model="editForm.focal_length" placeholder="如: 23mm" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="光圈">
-              <el-input v-model="editForm.aperture" placeholder="如: f/1.8" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="8">
-            <el-form-item label="快门">
-              <el-input v-model="editForm.shutter_speed" placeholder="如: 1/100s" />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        <el-divider content-position="left">图片预览</el-divider>
-        <div class="edit-images-preview">
-          <div class="preview-item">
-            <div class="preview-label">缩略图</div>
+
+        <!-- EXIF 信息卡片 -->
+        <el-divider content-position="left" style="margin: 16px 0;">EXIF 信息</el-divider>
+        <div class="exif-edit-card">
+          <el-row :gutter="12">
+            <el-col :span="12">
+              <div class="exif-field">
+                <label>型号</label>
+                <el-input v-model="editForm.model" placeholder="vivo X200 Pro" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="exif-field">
+                <label>地点</label>
+                <el-input v-model="editForm.location" placeholder="广东.惠州" size="small" />
+              </div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="12" style="margin-top: 8px;">
+            <el-col :span="8">
+              <div class="exif-field">
+                <label>焦距</label>
+                <el-input v-model="editForm.focal_length" placeholder="46mm" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="exif-field">
+                <label>光圈</label>
+                <el-input v-model="editForm.aperture" placeholder="f/1.57" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="exif-field">
+                <label>快门</label>
+                <el-input v-model="editForm.shutter_speed" placeholder="1/627s" size="small" />
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+
+        <!-- 图片预览 -->
+        <el-divider content-position="left" style="margin: 16px 0;">图片预览</el-divider>
+        <div class="edit-preview-grid">
+          <!-- 缩略图 -->
+          <div class="preview-card">
+            <div class="preview-title">缩略图</div>
             <el-image 
               v-if="editForm.thumbnail" 
               :src="editForm.thumbnail" 
               fit="contain" 
-              class="preview-img"
+              class="preview-image"
               :preview-src-list="[editForm.thumbnail]"
             >
               <template #error>
-                <div class="preview-error">加载失败</div>
+                <div class="image-error">加载失败</div>
               </template>
             </el-image>
-            <div v-else class="preview-empty">暂无图片</div>
+            <div v-else class="image-empty">暂无图片</div>
           </div>
-          <div class="preview-item">
-            <div class="preview-label">原图</div>
+
+          <!-- 原图 -->
+          <div class="preview-card">
+            <div class="preview-title">原图</div>
             <el-image 
               v-if="editForm.image_src" 
               :src="editForm.image_src" 
               fit="contain" 
-              class="preview-img"
+              class="preview-image"
               :preview-src-list="[editForm.image_src]"
             >
               <template #error>
-                <div class="preview-error">加载失败</div>
+                <div class="image-error">加载失败</div>
               </template>
             </el-image>
-            <div v-else class="preview-empty">暂无图片</div>
+            <div v-else class="image-empty">暂无图片</div>
+          </div>
+
+          <!-- Live Photo 视频 -->
+          <div v-if="editForm.is_live_photo && editForm.live_video" class="preview-card">
+            <div class="preview-title">Live Photo 视频</div>
+            <div class="video-preview-box">
+              <video
+                ref="editVideoRef"
+                :src="editForm.live_video_h264 || editForm.live_video"
+                class="preview-video"
+                muted
+                loop
+                playsinline
+                preload="metadata"
+              />
+              <div class="video-overlay">
+                <el-button
+                  type="primary"
+                  size="small"
+                  @mousedown="startEditVideoPreview"
+                  @mouseup="stopEditVideoPreview"
+                  @mouseleave="stopEditVideoPreview"
+                  @touchstart.prevent="startEditVideoPreview"
+                  @touchend.prevent="stopEditVideoPreview"
+                >
+                  {{ isEditVideoPlaying ? '播放中' : '按住预览' }}
+                </el-button>
+              </div>
+            </div>
           </div>
         </div>
-        <el-divider content-position="left">图片地址</el-divider>
-        <el-form-item label="缩略图">
-          <el-input v-model="editForm.thumbnail" placeholder="缩略图URL" />
-        </el-form-item>
-        <el-form-item label="原图">
-          <el-input v-model="editForm.image_src" placeholder="原图URL" />
-        </el-form-item>
+
+
       </el-form>
       <template #footer>
         <el-button @click="showEditDialog = false">取消</el-button>
@@ -298,15 +261,15 @@
       </template>
     </el-dialog>
 
-
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
-import { Plus, Search, Delete, Picture, UploadFilled } from '@element-plus/icons-vue'
+import { Plus, Search, Delete, Picture, VideoPlay, Sunny } from '@element-plus/icons-vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import exifr from 'exifr'
+import LivePhotoUpload from './LivePhotoUpload.vue'
+import HDRImageViewer from '@/components/HDRImageViewer.vue'
 
 const API_BASE = '/api'
 
@@ -322,19 +285,11 @@ const pageSize = ref(10)
 
 const showUploadDialog = ref(false)
 const showEditDialog = ref(false)
-const uploadRef = ref(null)
-
-const uploadForm = ref({
-  file: null,
-  previewUrl: null,
-  title: '',
-  category: '',
-  describe: '',
-  exifInfo: null
-})
 
 const editForm = ref({})
 const editIndex = ref(-1)
+const editVideoRef = ref(null)
+const isEditVideoPlaying = ref(false)
 
 
 
@@ -372,167 +327,9 @@ async function loadData() {
   loading.value = false
 }
 
-// 文件选择处理
-async function handleFileChange(uploadFile) {
-  uploadForm.value.file = uploadFile.raw
-  // 生成预览URL
-  uploadForm.value.previewUrl = URL.createObjectURL(uploadFile.raw)
-  
-  // 读取 EXIF
-  try {
-    const exifData = await exifr.parse(uploadFile.raw, {
-      pick: ['FNumber', 'ExposureTime', 'ShutterSpeedValue', 'FocalLengthIn35mmFormat', 'Model', 'Make', 'latitude', 'longitude'],
-      tiff: true, gps: true, mergeOutput: true
-    })
-    
-    if (exifData) {
-      // 提取型号（保留品牌）
-      let model = null
-      if (exifData.Model) {
-        const make = exifData.Make || ''
-        // 如果型号里已经包含品牌名，就不重复添加
-        if (exifData.Model.toLowerCase().includes(make.toLowerCase())) {
-          model = exifData.Model.trim()
-        } else {
-          model = make ? `${make} ${exifData.Model}`.trim() : exifData.Model.trim()
-        }
-      }
-      
-      // 提取焦距
-      const focalLength = exifData.FocalLengthIn35mmFormat ? `${Math.round(exifData.FocalLengthIn35mmFormat)}mm` : null
-      
-      // 提取光圈
-      let aperture = null
-      if (exifData.FNumber) {
-        const fNum = exifData.FNumber
-        aperture = `f/${fNum % 1 === 0 ? fNum : fNum.toFixed(1)}`
-      }
-      
-      // 提取快门
-      let shutterSpeed = null
-      if (exifData.ShutterSpeedValue) {
-        const exposure = Math.pow(2, -exifData.ShutterSpeedValue)
-        shutterSpeed = exposure < 1 ? `1/${Math.round(1/exposure)}s` : `${exposure.toFixed(1)}s`
-      } else if (exifData.ExposureTime) {
-        const exp = exifData.ExposureTime
-        shutterSpeed = exp < 1 ? `1/${Math.round(1/exp)}s` : `${exp}s`
-      }
-      
-      // 组合相机信息
-      const cameraInfoParts = [model, focalLength, aperture, shutterSpeed].filter(Boolean)
-      
-      // GPS 信息
-      const gps = exifData.latitude && exifData.longitude 
-        ? { lat: exifData.latitude, lng: exifData.longitude } 
-        : null
-      
-      uploadForm.value.exifInfo = {
-        model,
-        focalLength,
-        aperture,
-        shutterSpeed,
-        cameraInfo: cameraInfoParts.join(' · ') || null,
-        gps,
-        location: null
-      }
-      
-      // 如果有 GPS，调用后端 API 获取地址（API Key 在后端配置）
-      if (gps) {
-        try {
-          const geoRes = await fetch(`${API_BASE}/geocode?lat=${gps.lat}&lng=${gps.lng}`).then(r => r.json())
-          if (geoRes.location) {
-            uploadForm.value.exifInfo.location = geoRes.location
-          }
-        } catch (e) {
-          console.warn('地理编码失败:', e)
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('EXIF读取失败:', e)
-  }
-}
-
-function handleFileRemove() {
-  if (uploadForm.value.previewUrl) {
-    URL.revokeObjectURL(uploadForm.value.previewUrl)
-  }
-  uploadForm.value.file = null
-  uploadForm.value.previewUrl = null
-  uploadForm.value.exifInfo = null
-}
-
-// 移除已选图片
-function removeImage() {
-  handleFileRemove()
-}
-
-// 提交上传
-async function submitUpload() {
-  if (!uploadForm.value.file) {
-    ElMessage.warning('请选择图片')
-    return
-  }
-  if (!uploadForm.value.title || !uploadForm.value.category) {
-    ElMessage.warning('请填写标题和分类')
-    return
-  }
-
-  uploading.value = true
-  try {
-    // 上传图片
-    const formData = new FormData()
-    formData.append('image', uploadForm.value.file)
-    
-    const uploadRes = await fetch(`${API_BASE}/upload`, {
-      method: 'POST',
-      body: formData
-    }).then(r => r.json())
-
-    if (!uploadRes.success) {
-      throw new Error(uploadRes.error)
-    }
-
-    // 构建新图片数据
-    const exifInfo = uploadForm.value.exifInfo
-    const newPhoto = {
-      thumbnail: uploadRes.thumbnail,
-      image_src: uploadRes.original,
-      title: uploadForm.value.title,
-      category: uploadForm.value.category,
-      describe: uploadForm.value.describe || '',
-      model: exifInfo?.model || '',
-      focal_length: exifInfo?.focalLength || '',
-      aperture: exifInfo?.aperture || '',
-      shutter_speed: exifInfo?.shutterSpeed || '',
-      location: exifInfo?.location || '',
-      width: uploadRes.width || 0,
-      height: uploadRes.height || 0
-    }
-
-    // 添加到列表
-    photos.value.unshift(newPhoto)
-    await fetch(`${API_BASE}/photos`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(photos.value)
-    })
-
-    ElMessage.success('上传成功')
-    showUploadDialog.value = false
-    resetUploadForm()
-  } catch (e) {
-    ElMessage.error('上传失败: ' + e.message)
-  }
-  uploading.value = false
-}
-
-function resetUploadForm() {
-  if (uploadForm.value.previewUrl) {
-    URL.revokeObjectURL(uploadForm.value.previewUrl)
-  }
-  uploadForm.value = { file: null, previewUrl: null, title: '', category: '', describe: '', exifInfo: null }
-  uploadRef.value?.clearFiles()
+// 加载照片数据（供上传组件调用）
+async function loadPhotos() {
+  await loadData()
 }
 
 // 编辑图片
@@ -540,6 +337,34 @@ function editPhoto(photo) {
   editForm.value = { ...photo }
   editIndex.value = photos.value.findIndex(p => p.image_src === photo.image_src)
   showEditDialog.value = true
+}
+
+// 编辑对话框视频预览
+function startEditVideoPreview() {
+  const video = editVideoRef.value
+  if (!video || isEditVideoPlaying.value) return
+  
+  isEditVideoPlaying.value = true
+  video.currentTime = 0
+  video.muted = false
+  video.play().catch(err => {
+    console.error('播放失败:', err)
+    // 降级为静音播放
+    video.muted = true
+    video.play().catch(() => {
+      isEditVideoPlaying.value = false
+    })
+  })
+}
+
+function stopEditVideoPreview() {
+  const video = editVideoRef.value
+  if (!video || !isEditVideoPlaying.value) return
+  
+  video.pause()
+  video.currentTime = 0
+  video.muted = true
+  isEditVideoPlaying.value = false
 }
 
 async function saveEdit() {
@@ -593,22 +418,207 @@ onMounted(loadData)
 .photos-manager {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
 }
 
+/* 操作栏 */
 .action-bar {
-  border-radius: 8px;
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
+  transition: all 0.3s ease;
+}
+
+.action-bar:hover {
+  box-shadow: var(--admin-shadow-hover);
+}
+
+.action-bar :deep(.el-card__body) {
+  padding: 20px 24px;
 }
 
 .action-bar-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
 }
 
 .action-left {
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
+}
+
+/* Apple 风格输入框 */
+.action-left :deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  transition: all 0.25s ease;
+}
+
+.action-left :deep(.el-input__inner) {
+  color: var(--admin-text-primary);
+}
+
+.action-left :deep(.el-input__wrapper:hover) {
+  border-color: var(--admin-text-secondary);
+}
+
+.action-left :deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+/* Apple 风格选择器 */
+.action-left :deep(.el-select .el-select__wrapper) {
+  border-radius: 10px;
+  background: var(--admin-bg) !important;
+  border: 1px solid var(--admin-border) !important;
+  box-shadow: none !important;
+}
+
+.action-left :deep(.el-select .el-input__wrapper) {
+  border-radius: 10px;
+  background: var(--admin-bg) !important;
+  border: 1px solid var(--admin-border) !important;
+}
+
+.action-left :deep(.el-select .el-input__inner) {
+  color: var(--admin-text-primary) !important;
+}
+
+.action-left :deep(.el-select .el-select__placeholder) {
+  color: var(--admin-text-secondary) !important;
+}
+
+.action-left :deep(.el-select .el-input__suffix) {
+  color: var(--admin-text-secondary) !important;
+}
+
+/* Apple 风格按钮 */
+.action-right :deep(.el-button--primary) {
+  background: var(--primary-color);
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-weight: 500;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.action-right :deep(.el-button--primary:hover) {
+  background: var(--primary-hover);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
+}
+
+.action-right :deep(.el-button--primary:active) {
+  transform: translateY(0);
+}
+
+/* 对话框样式 */
+:deep(.el-dialog) {
+  border-radius: 20px;
+  background: var(--admin-card-bg);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+}
+
+:deep(.el-dialog__header) {
+  padding: 24px 24px 16px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+:deep(.el-dialog__title) {
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-dialog__body) {
+  padding: 24px;
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-dialog__footer) {
+  padding: 16px 24px 24px;
+  border-top: 1px solid var(--admin-border);
+}
+
+/* 表单样式 */
+:deep(.el-form-item__label) {
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+  font-size: 14px;
+}
+
+:deep(.el-input__wrapper) {
+  border-radius: 10px;
+  box-shadow: none;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  transition: all 0.25s ease;
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+:deep(.el-textarea__inner) {
+  border-radius: 10px;
+  border: 1px solid var(--admin-border);
+  background: var(--admin-bg);
+  color: var(--admin-text-primary);
+}
+
+:deep(.el-textarea__inner:hover) {
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-textarea__inner:focus) {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 4px var(--primary-light);
+}
+
+:deep(.el-select .el-input__wrapper) {
+  border-radius: 10px;
+}
+
+/* 对话框按钮 */
+:deep(.el-dialog__footer .el-button) {
+  border-radius: 10px;
+  padding: 10px 24px;
+  font-weight: 500;
+  border: none;
+}
+
+:deep(.el-dialog__footer .el-button--default) {
+  background: var(--admin-bg);
+  color: var(--admin-text-primary);
+  border: 1px solid var(--admin-border);
+}
+
+:deep(.el-dialog__footer .el-button--default:hover) {
+  background: var(--admin-hover-bg);
+  border-color: var(--admin-text-secondary);
+}
+
+:deep(.el-dialog__footer .el-button--primary) {
+  background: var(--primary-color);
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 122, 255, 0.25);
+}
+
+:deep(.el-dialog__footer .el-button--primary:hover) {
+  background: var(--primary-hover);
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.35);
 }
 
 .wrap-cell {
@@ -616,26 +626,154 @@ onMounted(loadData)
   white-space: normal;
   line-height: 1.5;
   font-size: 13px;
-  color: #606266;
+  color: var(--admin-text-primary);
 }
 
+/* 表格卡片 */
 .table-card {
+  border-radius: 16px;
+  border: 1px solid var(--admin-border);
+  box-shadow: var(--admin-shadow);
+}
+
+.table-card :deep(.el-card__body) {
+  padding: 24px;
+}
+
+/* 表格样式优化 */
+.table-card :deep(.el-table) {
+  background: transparent;
+  color: var(--admin-text-primary);
+}
+
+.table-card :deep(.el-table th) {
+  background: var(--admin-bg);
+  color: var(--admin-text-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
+.table-card :deep(.el-table td) {
+  border-color: var(--admin-border);
+}
+
+.table-card :deep(.el-table__row:hover) {
+  background: var(--admin-hover-bg);
+}
+
+.table-card :deep(.el-table--striped .el-table__body tr.el-table__row--striped) {
+  background: var(--admin-bg);
+}
+
+/* 表格按钮 */
+.table-card :deep(.el-button--primary) {
+  background: var(--primary-color);
+  border: none;
   border-radius: 8px;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.table-card :deep(.el-button--primary:hover) {
+  background: var(--primary-hover);
+}
+
+.table-card :deep(.el-button--danger) {
+  background: var(--error-color);
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+.table-card :deep(.el-button--danger:hover) {
+  background: #ff2d20;
+}
+
+/* Tag 样式 */
+.table-card :deep(.el-tag) {
+  border-radius: 6px;
+  border: none;
+  font-weight: 500;
+}
+
+.table-card :deep(.el-tag--success) {
+  background: rgba(52, 199, 89, 0.15);
+  color: var(--success-color);
+}
+
+.table-card :deep(.el-tag--warning) {
+  background: rgba(255, 149, 0, 0.15);
+  color: var(--warning-color);
 }
 
 .pagination-wrap {
   display: flex;
   justify-content: flex-end;
-  margin-top: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #ebeef5;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--admin-border);
+}
+
+.pagination-wrap :deep(.el-pagination) {
+  --el-pagination-button-bg-color: transparent;
+  --el-pagination-hover-color: var(--primary-color);
+}
+
+.pagination-wrap :deep(.el-pagination .btn-prev),
+.pagination-wrap :deep(.el-pagination .btn-next),
+.pagination-wrap :deep(.el-pagination .el-pager li) {
+  border-radius: 8px;
+  background: transparent;
+  color: var(--admin-text-secondary);
+  font-weight: 500;
+}
+
+.pagination-wrap :deep(.el-pagination .el-select .el-select__wrapper) {
+  background: var(--admin-bg) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pagination-wrap :deep(.el-pagination .el-select .el-input__inner) {
+  color: var(--admin-text-primary) !important;
+}
+
+.pagination-wrap :deep(.el-pagination__total),
+.pagination-wrap :deep(.el-pagination__jump) {
+  color: var(--admin-text-secondary);
+}
+
+.pagination-wrap :deep(.el-input__wrapper) {
+  background: var(--admin-bg) !important;
+  border-color: var(--admin-border) !important;
+}
+
+.pagination-wrap :deep(.el-input__inner) {
+  color: var(--admin-text-primary) !important;
+}
+
+.pagination-wrap :deep(.el-pagination .el-pager li:hover),
+.pagination-wrap :deep(.el-pagination .btn-prev:hover),
+.pagination-wrap :deep(.el-pagination .btn-next:hover) {
+  color: var(--primary-color);
+  background: var(--primary-light);
+}
+
+.pagination-wrap :deep(.el-pagination .el-pager li.is-active) {
+  background: var(--primary-color);
+  color: #ffffff;
 }
 
 .thumb-img {
   width: 100px;
   height: 70px;
-  border-radius: 6px;
+  border-radius: 10px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  transition: all 0.25s ease;
 }
 
 .image-error {
@@ -644,8 +782,8 @@ onMounted(loadData)
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #f5f7fa;
-  color: #c0c4cc;
+  background: var(--admin-bg);
+  color: var(--admin-text-secondary);
   font-size: 24px;
 }
 
@@ -798,6 +936,171 @@ onMounted(loadData)
 }
 
 
+.photo-tags {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.photo-tags .el-tag {
+  display: flex;
+  align-items: center;
+}
+
+/* EXIF 编辑卡片 */
+.exif-edit-card {
+  background: var(--admin-bg);
+  padding: 16px;
+  border-radius: 12px;
+  border: 1px solid var(--admin-border);
+}
+
+.exif-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.exif-field label {
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+  min-width: 40px;
+}
+
+/* 预览网格 */
+.edit-preview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.preview-card {
+  border: 1px solid var(--admin-border);
+  border-radius: 12px;
+  overflow: hidden;
+  background: var(--admin-card-bg);
+  box-shadow: var(--admin-shadow);
+  transition: all 0.25s ease;
+}
+
+.preview-title {
+  padding: 12px 16px;
+  background: var(--admin-bg);
+  font-size: 13px;
+  color: var(--admin-text-secondary);
+  font-weight: 600;
+  border-bottom: 1px solid var(--admin-border);
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.preview-image {
+  width: 100%;
+  height: 180px;
+  display: block;
+  background: var(--admin-bg);
+}
+
+.preview-image :deep(.el-image__inner) {
+  object-fit: contain !important;
+}
+
+.preview-image :deep(img) {
+  object-fit: contain !important;
+}
+
+.image-empty,
+.image-error {
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--admin-text-secondary);
+  font-size: 13px;
+  background: var(--admin-bg);
+}
+
+.image-error {
+  color: var(--error-color);
+}
+
+/* 视频预览 */
+.video-preview-box {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #000;
+}
+
+.preview-video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.video-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.3);
+  transition: all 0.25s ease;
+}
+
+.video-overlay:hover {
+  background: rgba(0, 0, 0, 0.4);
+}
+
+.video-overlay .el-button {
+  border-radius: 10px;
+  background: var(--primary-color);
+  border: none;
+  color: #ffffff;
+  font-weight: 500;
+  box-shadow: 0 4px 12px rgba(0, 122, 255, 0.4);
+}
+
+.video-overlay .el-button:hover {
+  background: var(--primary-hover);
+  transform: scale(1.05);
+}
+
+/* 响应式 */
+@media (max-width: 768px) {
+  .edit-preview-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .action-bar-content {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .action-left {
+    width: 100%;
+  }
+  
+  .action-left :deep(.el-input),
+  .action-left :deep(.el-select) {
+    width: 100% !important;
+  }
+  
+  .action-right {
+    width: 100%;
+  }
+  
+  .action-right :deep(.el-button) {
+    width: 100%;
+  }
+}
 </style>
 
 

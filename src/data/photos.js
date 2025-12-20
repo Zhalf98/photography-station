@@ -22,31 +22,56 @@ export const categories = [
 // 照片列表
 export const photoGallery = [
   {
-    "thumbnail": "/uploads/thumbnail/830da70fd3e55267_small.jpg",
-    "image_src": "/uploads/original/830da70fd3e55267.jpg",
-    "title": "祈年问天",
+    "thumbnail": "/uploads/thumbnail/04e2e97db940a75b_small.jpg",
+    "image_src": "/uploads/original/04e2e97db940a75b.jpg",
+    "title": "激流勇进",
     "category": "风景",
-    "describe": "蓝色琉璃瓦在北京的阳光下熠熠生辉，祈年殿以最庄严的姿态连接着天地。六百年的风雨洗礼，洗不去那份对苍穹的敬畏与虔诚。站在这里，仿佛能听见历史的回响，感受到古人天人合一的哲思在时空中流转。",
-    "model": "Apple iPhone 15",
-    "focal_length": "54mm",
-    "aperture": "f/1.6",
-    "shutter_speed": "1/3115",
-    "location": "北京.东城",
+    "describe": "雷公峡的溪流中，黄色皮划艇劈波斩浪，橙色救生衣在绿意中格外醒目。水花四溅的瞬间，记录了夏日里与自然的热血对话。",
+    "location": "广东.惠州",
     "width": 800,
-    "height": 1067
+    "height": 1067,
+    "is_hdr": true,
+    "color_space": "srgb",
+    "is_live_photo": true,
+    "live_video": "/uploads/live/04e2e97db940a75b.mp4",
+    "live_video_h264": null,
+    "live_codec": "h264",
+    "live_duration": "2.08",
+    "live_file_size": "4.95",
+    "live_has_audio": true,
+    "model": "vivo X200 Pro",
+    "focal_length": "46mm",
+    "aperture": "f/1.57",
+    "shutter_speed": "1/627s"
+  },
+  {
+    "thumbnail": "/uploads/thumbnail/0120f3a74540d8c1_small.jpg",
+    "image_src": "/uploads/original/0120f3a74540d8c1.jpg",
+    "title": "蔚蓝心事",
+    "category": "风景",
+    "describe": "惠州的海水清澈见底，礁石在蓝绿色的波光中若隐若现。海浪轻轻拍打着岸边，带走所有的疲惫，只留下这片宁静的蔚蓝。",
+    "model": "vivo X200 Pro",
+    "focal_length": "46mm",
+    "aperture": "f/1.6",
+    "shutter_speed": "1/2888s",
+    "location": "广东.惠州",
+    "width": 800,
+    "height": 600,
+    "is_hdr": true
   },
   {
     "thumbnail": "/uploads/thumbnail/23c674c31228fdf5_small.jpg",
     "image_src": "/uploads/original/23c674c31228fdf5.jpg",
     "title": "炭火人间",
     "category": "食物",
-    "describe": "230mm长焦镜头拉近了与美食的距离，炭火上的肉片泛着诱人的焦糖色泽，油脂在高温下滋滋作响。这是惠州夜晚最温暖的烟火气，是三五好友围坐时最真实的人间滋味。每一口都是对生活最朴素的热爱。",
+    "describe": "铁板上的肉片滋滋作响，焦香的边缘泛着诱人的金黄色泽，油脂在高温下闪烁着光芒。这是最简单却最治愈的人间烟火气。",
     "model": "vivo X200 Pro",
     "focal_length": "230mm",
     "aperture": "f/2.7",
     "shutter_speed": "1/50",
     "location": "广东.惠州",
     "width": 800,
-    "height": 602
+    "height": 602,
+    "is_hdr": true
   }
 ]

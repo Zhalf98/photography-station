@@ -1,15 +1,33 @@
 import { spawn } from 'child_process'
 import { fileURLToPath } from 'url'
 import path from 'path'
+import os from 'os'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.join(__dirname, '..')
+
+// 获取本机局域网 IP
+function getLocalIP() {
+  const interfaces = os.networkInterfaces()
+  for (const name of Object.keys(interfaces)) {
+    for (const iface of interfaces[name]) {
+      // 跳过内部和非 IPv4 地址
+      if (iface.family === 'IPv4' && !iface.internal) {
+        return iface.address
+      }
+    }
+  }
+  return 'localhost'
+}
+
+const localIP = getLocalIP()
 
 console.log(`
 ╔══════════════════════════════════════════════════════════════╗
 ║                  📷 摄影站 - 开发环境                         ║
 ╠══════════════════════════════════════════════════════════════╣
-║  🌐 主站页面:     http://localhost:3000                      ║
+║  🌐 本地访问:     http://localhost:3000                      ║
+║  📱 局域网访问:   http://${localIP}:3000                ║
 ║  🔧 管理后台:     http://localhost:3000/admin                ║
 ║  📡 API 服务:     http://localhost:3001 (内部代理)           ║
 ╠══════════════════════════════════════════════════════════════╣

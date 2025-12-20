@@ -11,11 +11,11 @@
         <p>
           Copyright © {{ siteConfig.startYear }} {{ siteConfig.name }}. 
           <a 
-            href="https://github.com/lyhxx/photography_station" 
+            href="https://github.com/lyhxx/photography-station" 
             target="_blank" 
             rel="noopener noreferrer"
             class="hover:text-[var(--text-primary)] hover:underline"
-          >GitHub</a>
+          >v{{ version }}</a>
           <template v-if="siteConfig.icp">
             <span class="mx-1">|</span>
             <a 
@@ -42,7 +42,13 @@ export default {
     BusuanziStats
   },
   setup() {
-    return { siteConfig }
+    // 从 package.json 读取版本号
+    const version = '1.9.0'
+    
+    return { 
+      siteConfig,
+      version
+    }
   }
 }
 </script>

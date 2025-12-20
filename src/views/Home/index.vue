@@ -18,15 +18,35 @@
         @click="openPhotoModal(photo)"
         class="masonry-item group cursor-pointer"
       >
-        <div class="rounded-2xl overflow-hidden mb-3 group-hover:scale-[1.02] transition-transform duration-500">
+        <div class="rounded-2xl overflow-hidden mb-3 group-hover:scale-[1.02] transition-transform duration-500 relative">
           <LazyImage
             :src="photo.thumbnail"
             :alt="photo.title"
             :width="photo.width"
             :height="photo.height"
           />
+          
+          <!-- 左上角 LIVE 图标 -->
+          <div v-if="photo.is_live_photo" class="live-indicator">
+            <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
+              <!-- 外围虚线圆 -->
+              <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"/>
+              <!-- 中间实心圆 -->
+              <circle cx="16" cy="16" r="8" stroke="currentColor" stroke-width="2"/>
+              <!-- 中心点 -->
+              <circle cx="16" cy="16" r="3" fill="currentColor"/>
+            </svg>
+          </div>
         </div>
-        <h3 class="text-[15px] md:text-[17px] font-medium text-[var(--text-primary)] mb-1">{{ photo.title }}</h3>
+        
+        <!-- 标题和标签 -->
+        <div class="flex items-center gap-2 mb-1">
+          <h3 class="text-[15px] md:text-[17px] font-medium text-[var(--text-primary)]">{{ photo.title }}</h3>
+          <div v-if="photo.is_live_photo || photo.is_hdr" class="flex gap-1.5">
+            <span v-if="photo.is_live_photo" class="badge badge-live">LIVE</span>
+            <span v-if="photo.is_hdr" class="badge badge-hdr">HDR</span>
+          </div>
+        </div>
         <p v-if="photo.location" class="text-[13px] text-[var(--text-secondary)]">{{ photo.location }}</p>
       </div>
     </div>
@@ -99,5 +119,80 @@ export default {
 .masonry-item {
   break-inside: avoid;
   margin-bottom: 1.5rem;
+}
+
+/* 左上角 LIVE 同心圆图标 */
+.live-indicator {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(10px);
+  border-radius: 50%;
+  color: #1d1d1f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.3s ease;
+  z-index: 2;
+}
+
+.live-indicator svg {
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.group:hover .live-indicator {
+  transform: scale(1.1);
+}
+
+@keyframes pulse {
+  0%, 100% { 
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 0.7;
+    transform: scale(0.95);
+  }
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .live-indicator {
+    background: rgba(28, 28, 30, 0.95);
+    color: #f5f5f7;
+  }
+}
+
+/* 标题右侧标签 */
+.badge {
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.badge-live {
+  background: var(--text-tertiary);
+  color: white;
+}
+
+.badge-hdr {
+  background: #ffcc00;
+  color: #1d1d1f;
+}
+
+/* 深色模式 */
+@media (prefers-color-scheme: dark) {
+  .badge-live {
+    background: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary);
+  }
 }
 </style>
