@@ -120,7 +120,14 @@
     />
 
     <!-- 编辑对话框 -->
-    <el-dialog v-model="showEditDialog" title="编辑图片" width="750px">
+    <el-dialog 
+      v-model="showEditDialog" 
+      title="编辑图片" 
+      :width="isMobile ? '100%' : '750px'"
+      :fullscreen="isMobile"
+      align-center
+      :top="isMobile ? '0' : '5vh'"
+    >
       <el-form :model="editForm" label-width="70px" size="default">
         <!-- 基本信息 -->
         <el-row :gutter="16">
@@ -144,7 +151,7 @@
         </el-row>
         
         <el-form-item label="描述">
-          <el-input v-model="editForm.describe" type="textarea" :rows="2" placeholder="图片描述（可选）" />
+          <el-input v-model="editForm.describe" type="textarea" :rows="3" placeholder="图片描述（可选）" />
         </el-form-item>
 
         <!-- EXIF 信息卡片 -->
@@ -285,6 +292,7 @@ const pageSize = ref(10)
 
 const showUploadDialog = ref(false)
 const showEditDialog = ref(false)
+const isMobile = ref(window.innerWidth <= 768)
 
 const editForm = ref({})
 const editIndex = ref(-1)
@@ -337,6 +345,8 @@ function editPhoto(photo) {
   editForm.value = { ...photo }
   editIndex.value = photos.value.findIndex(p => p.image_src === photo.image_src)
   showEditDialog.value = true
+  // 检测屏幕尺寸
+  isMobile.value = window.innerWidth <= 768
 }
 
 // 编辑对话框视频预览
@@ -1000,7 +1010,7 @@ onMounted(loadData)
 
 .preview-image {
   width: 100%;
-  height: 180px;
+  height: 150px;
   display: block;
   background: var(--admin-bg);
 }
@@ -1015,7 +1025,7 @@ onMounted(loadData)
 
 .image-empty,
 .image-error {
-  height: 180px;
+  height: 150px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1032,7 +1042,7 @@ onMounted(loadData)
 .video-preview-box {
   position: relative;
   width: 100%;
-  height: 180px;
+  height: 150px;
   background: #000;
 }
 
@@ -1075,17 +1085,92 @@ onMounted(loadData)
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .el-dialog :deep(.el-form-item) {
+    display: block !important;
+  }
+  
+  .el-dialog :deep(.el-form-item__label) {
+    float: none !important;
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    margin-bottom: 8px !important;
+    line-height: 1.5 !important;
+    padding: 0 !important;
+  }
+  
+  .el-dialog :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+    width: 100% !important;
+    display: block !important;
+  }
+  
+  .el-dialog :deep(.el-row) {
+    display: block !important;
+    margin: 0 !important;
+  }
+  
+  .el-dialog :deep(.el-col) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    padding: 0 !important;
+    margin-bottom: 12px !important;
+    display: block !important;
+  }
+  
+  .el-dialog :deep(.el-col:last-child) {
+    margin-bottom: 0 !important;
+  }
+  
+  .el-dialog :deep(.el-input),
+  .el-dialog :deep(.el-select),
+  .el-dialog :deep(.el-textarea) {
+    width: 100% !important;
+  }
+  
   .edit-preview-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+  
+  .exif-edit-card {
+    padding: 12px !important;
+  }
+  
+  .exif-edit-card :deep(.el-row) {
+    display: block !important;
+    margin: 0 !important;
+  }
+  
+  .exif-edit-card :deep(.el-col) {
+    width: 100% !important;
+    max-width: 100% !important;
+    display: block !important;
+    margin-bottom: 10px !important;
+    padding: 0 !important;
+  }
+  
+  .exif-field {
+    width: 100% !important;
+    display: flex !important;
+  }
+  
+  .exif-field label {
+    min-width: 45px !important;
+    flex-shrink: 0 !important;
+  }
+  
+  .exif-field :deep(.el-input) {
+    flex: 1 !important;
   }
   
   .action-bar-content {
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: column !important;
+    align-items: stretch !important;
   }
   
   .action-left {
-    width: 100%;
+    width: 100% !important;
   }
   
   .action-left :deep(.el-input),
@@ -1094,11 +1179,11 @@ onMounted(loadData)
   }
   
   .action-right {
-    width: 100%;
+    width: 100% !important;
   }
   
   .action-right :deep(.el-button) {
-    width: 100%;
+    width: 100% !important;
   }
 }
 </style>

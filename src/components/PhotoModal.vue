@@ -245,7 +245,7 @@ export default {
     
     // 当前照片（兼容单张和多张模式）
     const currentPhoto = computed(() => {
-      if (isMultiMode.value) {
+      if (props.photos && props.photos.length > 0) {
         return props.photos[currentIndex.value]
       }
       return props.photo

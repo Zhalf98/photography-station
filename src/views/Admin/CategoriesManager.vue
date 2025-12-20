@@ -44,7 +44,12 @@
         </div>
         <div class="card-desc">{{ cat.description || '暂无描述' }}</div>
         <div class="card-footer">
-          <el-tag type="info" size="small">{{ getPhotoCount(cat.name) }} 张图片</el-tag>
+          <el-tag v-if="getPhotoCount(cat.name) > 0" type="info" size="small">
+            {{ getPhotoCount(cat.name) }} 张图片
+          </el-tag>
+          <el-tag v-else type="info" size="small" effect="plain">
+            暂无图片
+          </el-tag>
         </div>
       </el-card>
     </div>
@@ -53,7 +58,13 @@
     <el-empty v-if="categories.length === 0" description="暂无分类，点击上方按钮添加" />
 
     <!-- 编辑/添加对话框 -->
-    <el-dialog v-model="showDialog" :title="isEdit ? '编辑分类' : '添加分类'" width="500px" @closed="resetForm">
+    <el-dialog 
+      v-model="showDialog" 
+      :title="isEdit ? '编辑分类' : '添加分类'" 
+      :width="isMobile ? '100%' : '500px'"
+      :fullscreen="isMobile"
+      @closed="resetForm"
+    >
       <el-form :model="form" label-width="80px" :rules="rules" ref="formRef">
         <el-form-item label="ID" prop="id">
           <el-input 
@@ -67,13 +78,13 @@
           <el-input v-model="form.name" placeholder="显示名称，如: 风景" />
         </el-form-item>
         <el-form-item label="图标" prop="icon">
-          <el-input v-model="form.icon" placeholder="Iconify图标，如: mdi:image">
-            <template #append>
-              <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-link">
-                查找图标
-              </a>
-            </template>
-          </el-input>
+          <el-input v-model="form.icon" placeholder="mdi:image" />
+          <div class="form-tip">
+            Iconify 图标名称，如: mdi:image
+            <a href="https://icon-sets.iconify.design/" target="_blank" class="icon-link" style="margin-left: 8px;">
+              查找图标 →
+            </a>
+          </div>
           <div class="icon-preview" v-if="form.icon">
             <span>预览:</span>
             <Icon :icon="form.icon" width="24" />
@@ -111,6 +122,7 @@ const showDialog = ref(false)
 const isEdit = ref(false)
 const editIndex = ref(-1)
 const formRef = ref(null)
+const isMobile = ref(window.innerWidth <= 768)
 
 const form = ref({
   id: '',
@@ -156,6 +168,7 @@ function addCategory() {
   isEdit.value = false
   form.value = { id: '', name: '', icon: 'mdi:image', description: '' }
   showDialog.value = true
+  isMobile.value = window.innerWidth <= 768
 }
 
 // 编辑分类
@@ -164,6 +177,7 @@ function editCategory(category, index) {
   editIndex.value = index
   form.value = { ...category }
   showDialog.value = true
+  isMobile.value = window.innerWidth <= 768
 }
 
 // 保存分类
@@ -582,6 +596,20 @@ onMounted(loadData)
 
 /* 响应式 */
 @media (max-width: 768px) {
+  .el-dialog :deep(.el-form-item__label) {
+    float: none !important;
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    margin-bottom: 8px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .el-dialog :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
   .category-grid {
     grid-template-columns: 1fr;
   }

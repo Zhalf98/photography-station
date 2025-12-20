@@ -1,31 +1,36 @@
 import { BasePhotoProcessor } from './BasePhotoProcessor.js'
-import { convertHEIC, formatFileSize } from './utils.js'
 
 /**
  * 普通照片处理器
- * 处理单张图片（JPEG、PNG、HEIC 等）
+ * 处理单张图片（JPEG、PNG 等）
  */
 export class NormalPhotoProcessor extends BasePhotoProcessor {
   async detect(file) {
-    // 普通照片处理器作为兜底，总是返回 true
-    return file && file.type && file.type.startsWith('image/')
+    if (!file) return false
+    
+    // 检查是否是图片文件（排除 HEIC）
+    const isImage = file && (
+      (file.type && file.type.startsWith('image/') && file.type !== 'image/heic') ||
+      file.name.toLowerCase().match(/\.(jpg|jpeg|png|gif|webp)$/)
+    )
+    
+    return !!isImage
   }
 
   async process(file) {
     console.log('🎯 使用普通照片处理器')
     
-    let imageBlob = file
+    const imageBlob = file
 
-    // HEIC 转换
-    if (file.type === 'image/heic' || file.name.toLowerCase().endsWith('.heic')) {
-      console.log('🔄 转换 HEIC 格式...')
-      imageBlob = await convertHEIC(file)
-    }
-
-    console.log(`✅ 普通照片处理完成 - 图片: ${formatFileSize(imageBlob.size)}`)
+    console.log(`✅ 普通照片处理完成`)
 
     // 提取 EXIF 信息
-    const exif = await this.extractEXIF(imageBlob)
+    let exif = null
+    try {
+      exif = await this.extractEXIF(imageBlob)
+    } catch (err) {
+      console.warn('EXIF 提取失败:', err)
+    }
 
     return {
       imageBlob,
@@ -34,6 +39,7 @@ export class NormalPhotoProcessor extends BasePhotoProcessor {
       videoUrl: null,
       isLivePhoto: false,
       source: 'normal',
+      needsServerConversion: false,
       exif
     }
   }

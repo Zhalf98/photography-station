@@ -1,13 +1,10 @@
 <template>
   <transition name="toast-slide">
-    <div v-if="showToast" class="browser-toast">
-      <div class="toast-content">
-        <div class="toast-icon">🌟</div>
-        <div class="toast-text">
-          <div class="toast-title">嘿，发现你在用 {{ browserName }} 浏览器</div>
-          <div class="toast-desc">推荐使用 Chrome 浏览器以获得最佳体验，Live Photo 可能无法正常播放哦～</div>
-        </div>
-        <button @click="closeToast" class="toast-close">
+    <div v-if="visible" class="custom-toast">
+      <div class="toast-content" :class="`toast-${type}`">
+        <div class="toast-icon">{{ iconMap[type] }}</div>
+        <div class="toast-text">{{ message }}</div>
+        <button @click="close" class="toast-close">
           <Icon icon="mdi:close" :width="18" :height="18" />
         </button>
       </div>
@@ -16,96 +13,79 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref } from 'vue'
 import { Icon } from '@iconify/vue'
 
 export default {
-  name: 'BrowserToast',
-  components: {
-    Icon
-  },
+  name: 'Toast',
+  components: { Icon },
   setup() {
-    const showToast = ref(false)
-    const browserName = ref('')
+    const visible = ref(false)
+    const message = ref('')
+    const type = ref('info')
+    let timer = null
 
-    const detectBrowser = () => {
-      const ua = navigator.userAgent
-      
-      // Chrome (包括 Edge Chromium)
-      if (ua.includes('Chrome') && !ua.includes('Edg')) {
-        return null // Chrome 不显示提示
-      }
-      
-      // Edge
-      if (ua.includes('Edg')) {
-        return 'Edge'
-      }
-      
-      // Safari
-      if (ua.includes('Safari') && !ua.includes('Chrome')) {
-        return 'Safari'
-      }
-      
-      // Firefox
-      if (ua.includes('Firefox')) {
-        return 'Firefox'
-      }
-      
-      // 其他浏览器
-      return '其他'
+    const iconMap = {
+      success: '✅',
+      error: '❌',
+      warning: '⚠️',
+      info: '💡'
     }
 
-    const closeToast = () => {
-      showToast.value = false
+    const show = (msg, msgType = 'info', duration = 2000) => {
+      message.value = msg
+      type.value = msgType
+      visible.value = true
+
+      if (timer) clearTimeout(timer)
+      if (duration > 0) {
+        timer = setTimeout(() => {
+          close()
+        }, duration)
+      }
     }
 
-    onMounted(() => {
-      // 检测浏览器
-      const browser = detectBrowser()
-      if (browser) {
-        browserName.value = browser
-        // 延迟 1 秒显示，让页面先加载
-        setTimeout(() => {
-          showToast.value = true
-          // 3 秒后自动关闭
-          setTimeout(() => {
-            if (showToast.value) {
-              closeToast()
-            }
-          }, 3000)
-        }, 1000)
+    const close = () => {
+      visible.value = false
+      if (timer) {
+        clearTimeout(timer)
+        timer = null
       }
-    })
+    }
 
     return {
-      showToast,
-      browserName,
-      closeToast
+      visible,
+      message,
+      type,
+      iconMap,
+      show,
+      close
     }
   }
 }
 </script>
 
 <style scoped>
-.browser-toast {
+.custom-toast {
   position: fixed;
   top: 80px;
   left: 50%;
   transform: translateX(-50%);
   z-index: 9999;
   max-width: 90%;
-  width: 600px;
+  width: auto;
+  min-width: 300px;
 }
 
 .toast-content {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
-  padding: 16px 20px;
+  padding: 14px 20px;
   background: rgba(255, 255, 255, 0.95);
   backdrop-filter: blur(40px) saturate(180%);
   -webkit-backdrop-filter: blur(40px) saturate(180%);
-  border-radius: 16px;
+  border-radius: 12px;
   box-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 2px 8px rgba(0, 0, 0, 0.08),
@@ -125,34 +105,23 @@ export default {
 }
 
 .toast-icon {
-  font-size: 24px;
+  font-size: 20px;
   line-height: 1;
   flex-shrink: 0;
-  margin-top: 2px;
 }
 
 .toast-text {
   flex: 1;
-  min-width: 0;
-}
-
-.toast-title {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: 14px;
+  font-weight: 500;
   color: var(--text-primary);
-  margin-bottom: 4px;
-}
-
-.toast-desc {
-  font-size: 13px;
-  color: var(--text-secondary);
   line-height: 1.5;
 }
 
 .toast-close {
   flex-shrink: 0;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -202,27 +171,23 @@ export default {
 
 /* 移动端适配 */
 @media (max-width: 768px) {
-  .browser-toast {
+  .custom-toast {
     top: 70px;
     width: calc(100% - 32px);
-    max-width: none;
+    min-width: 0;
   }
 
   .toast-content {
-    padding: 14px 16px;
+    padding: 12px 16px;
     gap: 10px;
   }
 
   .toast-icon {
-    font-size: 20px;
+    font-size: 18px;
   }
 
-  .toast-title {
-    font-size: 14px;
-  }
-
-  .toast-desc {
-    font-size: 12px;
+  .toast-text {
+    font-size: 13px;
   }
 }
 </style>

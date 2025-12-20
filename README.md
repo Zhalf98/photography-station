@@ -2,7 +2,7 @@
 
 <div align="center">
 
-![Version](https://img.shields.io/badge/Version-1.9.0-blue?style=flat)
+![Version](https://img.shields.io/badge/Version-1.9.1-blue?style=flat)
 ![Vue](https://img.shields.io/badge/Vue-3.4+-4FC08D?style=flat&logo=vue.js&logoColor=white)
 ![Vite](https://img.shields.io/badge/Vite-5.2+-646CFF?style=flat&logo=vite&logoColor=white)
 ![TailwindCSS](https://img.shields.io/badge/Tailwind-3.4+-06B6D4?style=flat&logo=tailwindcss&logoColor=white)
@@ -62,6 +62,25 @@
 
 **分类管理**
 ![后台分类管理](docs/images/doc11.png)
+
+---
+
+## 📝 最近更新
+
+### v1.9.1 (2024-12-20)
+
+**新增功能：**
+- ✨ 全局 Toast 提示组件 - 统一的消息提示系统
+- ✨ 相簿空状态提示 - 点击空相簿显示友好提示
+
+**Bug 修复：**
+- 🐛 修复相簿只有一张照片无法打开的问题
+- 🐛 修复相簿空状态显示问题
+
+**优化：**
+- 🔧 浏览器兼容性提示优化 - 移除 7 天缓存，改为 3 秒自动关闭
+
+**查看完整更新记录**: [CHANGELOG.md](CHANGELOG.md)
 
 ---
 
@@ -697,10 +716,12 @@ server {
 
 ### 注意事项
 
-- **生产环境管理后台路由自动禁用**，无法访问 `/admin`
+- **管理后台仅支持本地使用**，不支持远程部署
+  - 后端服务 (`admin-server`) 设计为本地开发使用
+  - 生产环境管理后台路由自动禁用，无法访问 `/admin`
+  - 建议在本地管理照片，然后部署到服务器
 - 建议使用 CDN 存储图片
 - 定期备份 `uploads/` 和 `src/data/photos.js`
-- 如需在生产环境使用管理后台，需要单独部署后端服务
 
 ---
 
@@ -760,14 +781,20 @@ server {
 <summary><b>Q: 生产环境如何使用管理后台？</b></summary>
 
 **A:** 
-默认情况下，生产环境的管理后台路由是禁用的。如需启用：
+管理后台仅设计为本地使用，不支持远程部署。原因：
 
-1. 修改 `src/router/index.js`，移除生产环境判断
-2. 单独部署后端服务（Express）
-3. 配置 Nginx 反向代理到后端
-4. 建议添加身份验证保护管理后台
+1. 后端服务 (`admin-server`) 是简单的 Express 服务，没有身份验证
+2. 直接操作本地文件系统，不适合生产环境
+3. 生产环境路由已自动禁用
 
-**注意**：不建议在公网暴露管理后台，建议本地管理后上传到服务器。
+**推荐工作流程：**
+1. 本地启动开发服务：`npm run dev`
+2. 访问 `http://localhost:3000/admin` 管理照片
+3. 修改完成后提交代码或重新构建部署
+
+**如果确实需要远程管理：**
+- 需要重新设计后端架构（添加身份验证、数据库、文件上传服务等）
+- 建议使用专业的 CMS 系统或对象存储服务
 
 </details>
 

@@ -2,9 +2,11 @@
   <el-dialog
     v-model="visible"
     title="上传照片"
-    width="800px"
+    :width="isMobile ? '100%' : '800px'"
+    :fullscreen="isMobile"
     :close-on-click-modal="false"
     @close="handleClose"
+    class="upload-dialog"
   >
     <!-- 浏览器兼容性警告 -->
     <el-alert
@@ -36,135 +38,158 @@
     </el-alert>
     
     <el-form :model="form" label-width="100px">
-      <!-- 文件上传区域 -->
+      <!-- 文件上传和预览 -->
       <el-form-item label="选择文件">
-        <el-upload
-          ref="uploadRef"
-          :auto-upload="false"
-          :on-change="handleFileChange"
-          :file-list="fileList"
-          :multiple="true"
-          :show-file-list="false"
-          accept="image/*,video/*"
-        >
-          <el-button type="primary">
-            <el-icon style="margin-right: 8px;"><upload-filled /></el-icon>
-            选择文件
-          </el-button>
-          <template #tip>
-            <div class="el-upload__tip">
-              支持 JPG/PNG/HEIC 图片，以及 Live Photo（图片+视频配对）
-            </div>
-          </template>
-        </el-upload>
-      </el-form-item>
-
-      <!-- 预览区域 -->
-      <el-form-item v-if="previewData" label="预览">
-        <div class="preview-container">
-          <div class="preview-image-wrapper">
-            <!-- HDR 照片使用特殊渲染 -->
-            <HDRImageViewer
-              v-if="previewData.needsHDRRendering"
-              :image-url="previewData.imageUrl"
-              :is-h-d-r="previewData.isHDR"
-            />
-            <!-- 普通照片 -->
-            <img
-              v-else
-              :src="previewData.imageUrl"
-              class="preview-image"
-            />
+        <div class="upload-preview-row">
+          <div class="upload-section">
+            <el-upload
+              ref="uploadRef"
+              :auto-upload="false"
+              :on-change="handleFileChange"
+              :file-list="fileList"
+              :show-file-list="false"
+              accept="image/jpeg,image/png,image/jpg"
+            >
+              <el-button type="primary">
+                <el-icon style="margin-right: 8px;"><upload-filled /></el-icon>
+                选择文件
+              </el-button>
+              <template #tip>
+                <div class="el-upload__tip">
+                  支持 JPG/PNG 图片，vivo 动态照片自动提取视频
+                </div>
+              </template>
+            </el-upload>
             
-            <!-- Live Photo 视频预览 -->
-            <video
-              v-if="previewData.isLivePhoto"
-              ref="previewVideoRef"
-              :src="previewData.videoUrl"
-              class="preview-video"
-              :style="{ opacity: isPreviewPlaying ? 1 : 0 }"
-              loop
-              playsinline
-              preload="auto"
-            />
-            
-            <!-- Live Photo 标记（左上角，仿 iOS） -->
-            <div v-if="previewData.isLivePhoto" class="live-badge">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
-                <circle cx="12" cy="12" r="10"/>
-                <circle cx="12" cy="12" r="3" fill="currentColor"/>
-              </svg>
-              <span>动态照片</span>
-            </div>
-            
-            <!-- Live Photo 控制按钮（悬停显示） -->
-            <div v-if="previewData.isLivePhoto" class="live-controls" :class="{ 'is-playing': isPreviewPlaying }">
-              <div class="button-group">
-                <el-button
-                  type="primary"
-                  size="small"
-                  @mousedown="startPreview"
-                  @mouseup="stopPreview"
-                  @mouseleave="stopPreview"
-                  @touchstart.prevent="startPreview"
-                  @touchend.prevent="stopPreview"
-                >
-                  {{ isPreviewPlaying ? '播放中...' : '按住预览' }}
-                </el-button>
-                <el-button size="small" @click="downloadVideo">下载视频</el-button>
-                <el-button size="small" @click="downloadImage">下载图片</el-button>
+            <!-- 照片类型标签 - 放在上传按钮下方 -->
+            <div v-if="previewData" class="photo-tags" style="margin-top: 20px;">
+              <div style="color: #909399; font-size: 13px; margin-bottom: 8px;">照片类型</div>
+              <div style="display: flex; flex-direction: column; gap: 8px; align-items: flex-start;">
+                <el-tag v-if="previewData.isLivePhoto" type="success" size="large">
+                  Live Photo
+                </el-tag>
+                <el-tag v-if="previewData.isHDR" type="warning" size="large">
+                  HDR
+                </el-tag>
+                <el-tag v-if="!previewData.isLivePhoto && !previewData.isHDR" type="info" size="large">
+                  静态照片
+                </el-tag>
+                <el-tag type="primary" size="large">
+                  {{ getSourceLabel(previewData.source) }}
+                </el-tag>
               </div>
             </div>
           </div>
           
-        </div>
-      </el-form-item>
-
-      <!-- 照片类型标签 -->
-      <el-form-item label="照片类型" v-if="previewData">
-        <div class="photo-tags">
-          <el-tag v-if="previewData.isLivePhoto" type="success" size="large">
-            Live Photo
-          </el-tag>
-          <el-tag v-if="previewData.isHDR" type="warning" size="large">
-            HDR
-          </el-tag>
-          <el-tag v-if="!previewData.isLivePhoto && !previewData.isHDR" type="info" size="large">
-            静态照片
-          </el-tag>
-          <el-tag type="primary" size="large">
-            {{ getSourceLabel(previewData.source) }}
-          </el-tag>
+          <!-- 预览区域 -->
+          <div v-if="previewData" class="preview-section">
+            <div class="preview-image-wrapper">
+              <!-- HEIC 无法预览提示 -->
+              <div v-if="previewData.needsServerConversion" class="heic-placeholder">
+                <el-icon :size="48" color="#909399"><Picture /></el-icon>
+                <p style="margin-top: 12px; color: #606266;">HEIC 格式无法预览</p>
+                <p style="margin-top: 4px; color: #909399; font-size: 12px;">上传后会自动转换为 JPG</p>
+                <p v-if="previewData.isLivePhoto" style="margin-top: 8px; color: #67c23a; font-size: 13px;">
+                  ✓ 已检测到 Live Photo 视频
+                </p>
+              </div>
+              
+              <!-- HDR 照片使用特殊渲染 -->
+              <HDRImageViewer
+                v-else-if="previewData.needsHDRRendering"
+                :image-url="previewData.imageUrl"
+                :is-h-d-r="previewData.isHDR"
+                class="preview-image"
+              />
+              <!-- 普通照片 -->
+              <img
+                v-else
+                :src="previewData.imageUrl"
+                class="preview-image"
+                @error="handleImageError"
+              />
+              
+              <!-- Live Photo 视频预览 -->
+              <video
+                v-if="previewData.isLivePhoto && previewData.videoUrl"
+                ref="previewVideoRef"
+                :src="previewData.videoUrl"
+                class="preview-video"
+                :style="{ opacity: isPreviewPlaying ? 1 : 0 }"
+                loop
+                playsinline
+                preload="auto"
+              />
+              
+              <!-- Live Photo 标记（左上角，仿 iOS） -->
+              <div v-if="previewData.isLivePhoto" class="live-badge">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                  <circle cx="12" cy="12" r="10"/>
+                  <circle cx="12" cy="12" r="3" fill="currentColor"/>
+                </svg>
+                <span>动态照片</span>
+              </div>
+              
+              <!-- Live Photo 控制按钮（悬停显示） -->
+              <div v-if="previewData.isLivePhoto && previewData.videoUrl" class="live-controls" :class="{ 'is-playing': isPreviewPlaying }">
+                <div class="button-group">
+                  <el-button
+                    type="primary"
+                    size="small"
+                    @mousedown="startPreview"
+                    @mouseup="stopPreview"
+                    @mouseleave="stopPreview"
+                    @touchstart.prevent="startPreview"
+                    @touchend.prevent="stopPreview"
+                  >
+                    {{ isPreviewPlaying ? '播放中...' : '按住预览' }}
+                  </el-button>
+                  <el-button size="small" @click="downloadVideo">下载视频</el-button>
+                  <el-button v-if="!previewData.needsServerConversion" size="small" @click="downloadImage">下载图片</el-button>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </el-form-item>
 
       <!-- EXIF 信息卡片 -->
       <el-form-item label="EXIF信息" v-if="previewData">
         <div class="exif-card">
-          <div class="exif-row">
-            <div class="exif-item full">
-              <label>型号：</label>
-              <el-input v-model="form.model" placeholder="vivo X200 Pro" size="small" />
-            </div>
-            <div class="exif-item full">
-              <label>地点：</label>
-              <el-input v-model="form.location" placeholder="广东.惠州" size="small" />
-            </div>
-          </div>
-          <div class="exif-row">
-            <div class="exif-item">
-              <label>焦距：</label>
-              <el-input v-model="form.focal_length" placeholder="230mm" size="small" />
-            </div>
-            <div class="exif-item">
-              <label>光圈：</label>
-              <el-input v-model="form.aperture" placeholder="f/2.7" size="small" />
-            </div>
-            <div class="exif-item">
-              <label>快门：</label>
-              <el-input v-model="form.shutter_speed" placeholder="1/100s" size="small" />
-            </div>
-          </div>
+          <el-row :gutter="12">
+            <el-col :span="12">
+              <div class="exif-item">
+                <label>型号：</label>
+                <el-input v-model="form.model" placeholder="vivo X200 Pro" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="exif-item">
+                <label>地点：</label>
+                <el-input v-model="form.location" placeholder="广东.惠州" size="small" />
+              </div>
+            </el-col>
+          </el-row>
+          <el-row :gutter="12" style="margin-top: 10px;">
+            <el-col :span="8">
+              <div class="exif-item">
+                <label>焦距：</label>
+                <el-input v-model="form.focal_length" placeholder="230mm" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="exif-item">
+                <label>光圈：</label>
+                <el-input v-model="form.aperture" placeholder="f/2.7" size="small" />
+              </div>
+            </el-col>
+            <el-col :span="8">
+              <div class="exif-item">
+                <label>快门：</label>
+                <el-input v-model="form.shutter_speed" placeholder="1/100s" size="small" />
+              </div>
+            </el-col>
+          </el-row>
         </div>
       </el-form-item>
 
@@ -204,9 +229,9 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, onUnmounted } from 'vue'
 import { ElMessage } from 'element-plus'
-import { UploadFilled, VideoPlay, Warning, Sunny } from '@element-plus/icons-vue'
+import { UploadFilled, VideoPlay, Warning, Sunny, Picture } from '@element-plus/icons-vue'
 import { photoProcessorFactory } from '@/utils/photoProcessors'
 import HDRImageViewer from '@/components/HDRImageViewer.vue'
 
@@ -228,6 +253,7 @@ const previewVideoRef = ref(null)
 const uploading = ref(false)
 const isPreviewPlaying = ref(false)
 const showBrowserWarning = ref(false)
+const isMobile = ref(window.innerWidth <= 768)
 
 const form = ref({
   title: '',
@@ -263,6 +289,8 @@ watch(() => props.modelValue, (val) => {
   visible.value = val
   if (val) {
     checkBrowserCompatibility()
+    // 检测屏幕尺寸
+    isMobile.value = window.innerWidth <= 768
   }
 })
 
@@ -281,11 +309,21 @@ watch(() => previewData.value?.videoUrl, async (newUrl) => {
 // 文件选择处理
 const handleFileChange = async (file, fileListData) => {
   try {
-    ElMessage.info('正在处理文件...')
+    // 清理旧的 Blob URL（防止内存泄漏）
+    if (previewData.value) {
+      if (previewData.value.imageUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewData.value.imageUrl)
+      }
+      if (previewData.value.videoUrl?.startsWith('blob:')) {
+        URL.revokeObjectURL(previewData.value.videoUrl)
+      }
+    }
+    
+    // 清空旧的文件列表，只保留新选择的文件
+    fileList.value = [file]
     
     // 使用工厂自动选择处理器
-    const files = fileListData.map(f => f.raw)
-    const result = await photoProcessorFactory.process(files)
+    const result = await photoProcessorFactory.process(file.raw)
     
     previewData.value = result
     
@@ -318,9 +356,8 @@ const handleFileChange = async (file, fileListData) => {
         }
       }
       
-      // GPS 地理位置
+      // GPS 地理位置（静默获取，不显示提示）
       if (exif.gps) {
-        ElMessage.info('正在获取地理位置...')
         try {
           const response = await fetch(`/api/geocode?lat=${exif.gps.latitude}&lng=${exif.gps.longitude}`)
           const data = await response.json()
@@ -332,8 +369,6 @@ const handleFileChange = async (file, fileListData) => {
         }
       }
     }
-    
-    ElMessage.success('文件处理成功')
     
   } catch (error) {
     console.error('文件处理失败:', error)
@@ -538,9 +573,40 @@ const handleClose = () => {
     shutter_speed: ''
   }
 }
+
+// 组件卸载时清理 Blob URL
+onUnmounted(() => {
+  if (previewData.value) {
+    if (previewData.value.imageUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(previewData.value.imageUrl)
+    }
+    if (previewData.value.videoUrl?.startsWith('blob:')) {
+      URL.revokeObjectURL(previewData.value.videoUrl)
+    }
+  }
+})
 </script>
 
 <style scoped>
+.upload-dialog :deep(.el-form-item) {
+  margin-bottom: 18px;
+}
+
+.upload-preview-row {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.upload-section {
+  flex-shrink: 0;
+}
+
+.preview-section {
+  flex: 1;
+  min-width: 0;
+}
+
 .preview-container {
   display: flex;
   flex-direction: column;
@@ -549,19 +615,29 @@ const handleClose = () => {
 
 .preview-image-wrapper {
   position: relative;
-  max-width: 400px;
+  width: fit-content;
+  max-width: 100%;
   border-radius: 8px;
-  overflow: hidden;
   background: #f5f5f5;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .preview-image {
-  width: 100%;
-  height: auto;
-  max-height: 400px;
-  object-fit: contain;
   display: block;
+  max-height: 200px;
+  max-width: 100%;
+  width: auto;
+  height: auto;
+  object-fit: contain;
+  border-radius: 8px;
+}
+
+.preview-image :deep(canvas),
+.preview-image :deep(img) {
+  max-height: 200px !important;
+  width: auto !important;
+  height: auto !important;
+  object-fit: contain !important;
 }
 
 .preview-video {
@@ -638,34 +714,19 @@ const handleClose = () => {
 
 .exif-card {
   width: 100%;
-  background: #f5f7fa;
+  background: var(--admin-bg, #f5f7fa);
   border-radius: 8px;
   padding: 16px;
 }
 
-.exif-row {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.exif-row:last-child {
-  margin-bottom: 0;
-}
-
 .exif-item {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
 }
 
-.exif-item.full {
-  flex: 1;
-}
-
 .exif-item label {
-  color: #606266;
+  color: var(--admin-text-secondary, #606266);
   font-size: 14px;
   white-space: nowrap;
   min-width: 48px;
@@ -684,5 +745,99 @@ const handleClose = () => {
 .photo-tags .el-tag {
   display: flex;
   align-items: center;
+}
+
+/* 移动端适配 */
+@media (max-width: 768px) {
+  .upload-dialog :deep(.el-form-item__label) {
+    float: none !important;
+    display: block !important;
+    width: 100% !important;
+    text-align: left !important;
+    margin-bottom: 8px !important;
+    line-height: 1.5 !important;
+  }
+  
+  .upload-dialog :deep(.el-form-item__content) {
+    margin-left: 0 !important;
+    width: 100% !important;
+  }
+  
+  .upload-preview-row {
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .upload-section {
+    width: 100%;
+  }
+  
+  .upload-section .photo-tags {
+    margin-top: 16px !important;
+  }
+  
+  .upload-section .photo-tags > div:first-child {
+    margin-bottom: 8px;
+  }
+  
+  .upload-section .photo-tags > div:last-child {
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+    gap: 8px !important;
+  }
+  
+  .preview-section {
+    width: 100%;
+  }
+  
+  .exif-card {
+    padding: 12px;
+  }
+  
+  .exif-card :deep(.el-row) {
+    margin: 0 !important;
+  }
+  
+  .exif-card :deep(.el-col) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 0 0 100% !important;
+    margin-bottom: 10px;
+  }
+  
+  .exif-card :deep(.el-col:last-child) {
+    margin-bottom: 0;
+  }
+  
+  .exif-item {
+    width: 100%;
+  }
+  
+  .exif-item label {
+    min-width: 45px;
+    font-size: 13px;
+  }
+  
+  .exif-item :deep(.el-input) {
+    flex: 1;
+  }
+  
+  .live-controls .button-group {
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .live-controls .button-group .el-button {
+    width: 100%;
+  }
+  
+  .preview-image-wrapper {
+    max-width: 100%;
+  }
+  
+  .photo-tags {
+    width: 100%;
+  }
 }
 </style>

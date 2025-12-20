@@ -8,7 +8,7 @@
     </div>
 
     <!-- 相册网格 -->
-    <div v-if="!selectedCategory" class="album-grid">
+    <div class="album-grid">
       <div
         v-for="category in categoriesList"
         :key="category.id"
@@ -43,10 +43,19 @@
           <!-- 封面照片（第1张） -->
           <div class="folder-cover">
             <img 
-              :src="getCategoryPhotos(category.name)[0]?.thumbnail" 
+              v-if="getCategoryPhotos(category.name)[0]"
+              :src="getCategoryPhotos(category.name)[0].thumbnail" 
               :alt="category.name"
               class="cover-image"
             />
+            <!-- 没有照片时显示彩虹渐变 + 提示 -->
+            <div v-else class="cover-empty">
+              <div class="layer-gradient"></div>
+              <div class="empty-text">
+                <Icon icon="mdi:image-off-outline" width="48" />
+                <span>暂无照片</span>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -61,7 +70,7 @@
 
     <!-- 照片弹窗（带缩略图导航） -->
     <PhotoModal
-      v-if="selectedPhotoIndex !== null"
+      v-if="selectedPhotoIndex !== null && filteredPhotos.length > 0"
       :photos="filteredPhotos"
       :initialIndex="selectedPhotoIndex"
       @close="closePhotoModal"
@@ -70,7 +79,7 @@
 </template>
 
 <script>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, inject } from 'vue'
 import { photoGallery, categories } from '../../data/photos.js'
 import { galleryConfig } from '../../config/index.js'
 import { useSEO } from '../../composables/useSEO.js'
@@ -85,6 +94,7 @@ export default {
   },
   setup() {
     const { setTitle, setDescription, setKeywords, setCanonical } = useSEO()
+    const showToast = inject('showToast')
     
     const categoriesList = ref(categories)
     const selectedCategory = ref(null) // null 表示显示相册列表
@@ -103,14 +113,27 @@ export default {
     const isPhotoMode = computed(() => galleryConfig.albumLayerMode === 'photo')
 
     const filteredPhotos = computed(() => {
+      console.log('计算 filteredPhotos, selectedCategory:', selectedCategory.value)
       if (!selectedCategory.value) return []
-      return photoGallery.filter(photo => photo.category === selectedCategory.value)
+      const result = photoGallery.filter(photo => photo.category === selectedCategory.value)
+      console.log('filteredPhotos 结果:', result)
+      return result
     })
 
     const openAlbum = (categoryName) => {
+      console.log('点击相簿:', categoryName)
       selectedCategory.value = categoryName
-      // 直接打开第一张照片的弹窗
-      selectedPhotoIndex.value = 0
+      // 只有当分类有照片时才打开弹窗
+      const photos = getCategoryPhotos(categoryName)
+      console.log('该分类的照片数量:', photos.length)
+      console.log('照片列表:', photos)
+      if (photos.length > 0) {
+        selectedPhotoIndex.value = 0
+        console.log('打开弹窗，索引:', 0)
+      } else {
+        console.log('没有照片，不打开弹窗')
+        showToast('这个相簿还空空如也，快去添加照片吧', 'info')
+      }
     }
     
     const getCategoryPhotos = (categoryName) => {
@@ -231,6 +254,36 @@ export default {
   object-fit: cover;
 }
 
+.cover-empty {
+  position: relative;
+  width: 100%;
+  height: 100%;
+}
+
+.cover-empty .layer-gradient {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.empty-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  color: rgba(255, 255, 255, 0.95);
+  font-size: 16px;
+  font-weight: 600;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
 /* 悬停效果 */
 .album-card:hover .folder-layer.layer-3 {
   top: -16px;
@@ -286,6 +339,7 @@ export default {
   line-height: 1.6;
   display: -webkit-box;
   -webkit-line-clamp: 2;
+  line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }

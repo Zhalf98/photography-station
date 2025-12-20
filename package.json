@@ -1,7 +1,7 @@
 {
   "name": "plog",
   "private": true,
-  "version": "1.9.0",
+  "version": "1.9.1",
   "description": "个人摄影作品展示网站 - 基于 Vue 3 + Vite",
   "author": "摄影站",
   "license": "MIT",

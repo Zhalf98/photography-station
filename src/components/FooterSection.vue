@@ -43,7 +43,7 @@ export default {
   },
   setup() {
     // 从 package.json 读取版本号
-    const version = '1.9.0'
+    const version = '1.9.1'
     
     return { 
       siteConfig,

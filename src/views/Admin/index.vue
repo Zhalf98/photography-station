@@ -609,25 +609,51 @@ const dismissBrowserTip = () => {
 
 @media (max-width: 768px) {
   .admin-header {
-    padding: 0 16px;
+    padding: 0 12px;
+    gap: 0;
+    justify-content: space-between;
+  }
+  
+  .header-left {
+    flex: 0 0 auto;
+    width: 60px;
   }
   
   .header-center {
     flex: 1;
     display: flex;
     justify-content: center;
+    align-items: center;
   }
   
   .header-right {
     flex: 0 0 auto;
+    gap: 8px;
+    width: auto;
+    min-width: 108px;
+    justify-content: flex-end;
   }
   
   .tab-nav {
-    width: 100%;
+    width: auto;
+    gap: 6px;
+  }
+  
+  .tab-item {
+    padding: 10px 12px;
   }
   
   .tab-item span {
     display: none;
+  }
+  
+  .theme-toggle {
+    width: 44px;
+    height: 44px;
+  }
+  
+  .back-btn {
+    padding: 10px 12px;
   }
   
   .back-btn span {

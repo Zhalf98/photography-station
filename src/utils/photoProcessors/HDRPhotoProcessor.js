@@ -6,7 +6,7 @@ import { BasePhotoProcessor } from './BasePhotoProcessor.js'
  */
 export class HDRPhotoProcessor extends BasePhotoProcessor {
   async detect(file) {
-    if (file.type !== 'image/jpeg') return false
+    if (!file || file.type !== 'image/jpeg') return false
 
     try {
       const headerSize = Math.min(256 * 1024, file.size)

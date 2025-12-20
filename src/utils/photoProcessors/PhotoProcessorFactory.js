@@ -1,6 +1,5 @@
 import { VivoMotionPhotoProcessor } from './VivoMotionPhotoProcessor.js'
 import { GoogleMotionPhotoProcessor } from './GoogleMotionPhotoProcessor.js'
-import { IPhoneLivePhotoProcessor } from './IPhoneLivePhotoProcessor.js'
 import { HDRPhotoProcessor } from './HDRPhotoProcessor.js'
 import { NormalPhotoProcessor } from './NormalPhotoProcessor.js'
 
@@ -15,7 +14,6 @@ export class PhotoProcessorFactory {
       new VivoMotionPhotoProcessor(),    // 100
       new GoogleMotionPhotoProcessor(),  // 90
       new HDRPhotoProcessor(),           // 85
-      new IPhoneLivePhotoProcessor(),    // 80
       new NormalPhotoProcessor()         // 0
     ].sort((a, b) => b.getPriority() - a.getPriority())
   }
@@ -34,19 +32,30 @@ export class PhotoProcessorFactory {
    * @param {File|File[]} files - 单个文件或文件数组
    * @returns {Promise<ProcessResult>}
    */
-  async process(files) {
-    const fileArray = Array.isArray(files) ? files : [files]
-    
-    console.log(`📸 开始处理 ${fileArray.length} 个文件`)
+  async process(file) {
+    console.log(`📸 开始处理文件: ${file.name}`)
 
     // 遍历所有处理器，找到第一个支持的
     for (const processor of this.processors) {
       try {
-        const canHandle = await processor.detect(fileArray.length === 1 ? fileArray[0] : fileArray)
+        console.log(`🔍 尝试处理器: ${processor.getName()} (优先级: ${processor.getPriority()})`)
+        const canHandle = await processor.detect(file)
         
         if (canHandle) {
           console.log(`✅ 选择处理器: ${processor.getName()}`)
-          return await processor.process(fileArray.length === 1 ? fileArray[0] : fileArray)
+          
+          try {
+            return await processor.process(file)
+          } catch (processError) {
+            console.error(`❌ 处理器 ${processor.getName()} 处理失败:`, processError)
+            // 如果是最后一个处理器（兜底处理器），直接抛出错误
+            if (processor.getPriority() === 0) {
+              throw processError
+            }
+            // 否则继续尝试下一个处理器
+            console.log('⏭️ 尝试下一个处理器...')
+            continue
+          }
         }
       } catch (error) {
         console.warn(`处理器 ${processor.getName()} 检测失败:`, error)
