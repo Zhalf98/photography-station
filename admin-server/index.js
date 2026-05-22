@@ -11,6 +11,7 @@ import exifr from 'exifr'
 import ffmpeg from 'fluent-ffmpeg'
 import ffmpegPath from '@ffmpeg-installer/ffmpeg'
 import ffprobePath from '@ffprobe-installer/ffprobe'
+import jwt from 'jsonwebtoken'
 
 // 配置 ffmpeg 和 ffprobe 路径
 ffmpeg.setFfmpegPath(ffmpegPath.path)
@@ -27,9 +28,125 @@ const UPLOADS_DIR = path.join(ROOT_DIR, 'uploads')
 // 从环境变量读取 API Key
 const AMAP_API_KEY = process.env.AMAP_API_KEY || ''
 
+// 管理员认证配置
+const JWT_SECRET = process.env.JWT_SECRET || 'plog_admin_secret_key_2024'
+const ADMIN_USER = process.env.ADMIN_USERNAME || 'admin'
+let ADMIN_PASS = process.env.ADMIN_PASSWORD || 'admin123'
+
 const app = express()
 app.use(cors())
 app.use(express.json())
+
+// ============ 认证 ============
+
+// 登录接口
+app.post("/api/login", (req, res) => {
+  const { username, password } = req.body
+  if (username === ADMIN_USER && password === ADMIN_PASS) {
+    const token = jwt.sign({ user: username }, JWT_SECRET, { expiresIn: "7d" })
+    res.json({ success: true, token })
+  } else {
+    res.status(401).json({ error: "用户名或密码错误" })
+  }
+})
+
+// Token 验证中间件（保护写操作）
+const authMiddleware = (req, res, next) => {
+  const token = req.headers.authorization?.replace("Bearer ", "")
+  if (!token) return res.status(401).json({ error: "未登录" })
+  try {
+    jwt.verify(token, JWT_SECRET)
+    next()
+  } catch {
+    res.status(401).json({ error: "登录已过期" })
+  }
+}
+
+
+// ============ 系统设置 ============
+
+// 获取当前设置
+app.get("/api/admin-path", (req, res) => { res.json({ adminPath: process.env.ADMIN_PATH || "admin" }) })
+
+app.get("/api/settings", authMiddleware, (req, res) => {
+  res.json({
+    adminPath: process.env.ADMIN_PATH || "admin",
+    username: ADMIN_USER
+  })
+})
+
+// 修改密码
+app.post("/api/settings/password", authMiddleware, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body
+    if (!currentPassword || !newPassword) {
+      return res.status(400).json({ error: "请填写完整" })
+    }
+    if (currentPassword !== ADMIN_PASS) {
+      return res.status(401).json({ error: "当前密码错误" })
+    }
+    if (newPassword.length < 4) {
+      return res.status(400).json({ error: "新密码至少4位" })
+    }
+    
+    // 更新 .env 文件
+    const envPath = path.join(__dirname, '.env')
+    let envContent = await fs.readFile(envPath, 'utf-8')
+    envContent = envContent.replace(
+      /ADMIN_PASSWORD=.*/,
+      `ADMIN_PASSWORD=${newPassword}`
+    )
+    await fs.writeFile(envPath, envContent)
+    
+    // 更新内存中的变量
+    process.env.ADMIN_PASSWORD = newPassword
+    ADMIN_PASS = newPassword
+    
+    res.json({ success: true, message: "密码已更新，下次登录生效" })
+  } catch (err) {
+    res.status(500).json({ error: "更新失败: " + err.message })
+  }
+})
+
+// 修改后台路径
+app.post("/api/settings/admin-path", authMiddleware, async (req, res) => {
+  try {
+    const { adminPath } = req.body
+    if (!adminPath || !/^[a-zA-Z0-9_-]+$/.test(adminPath)) {
+      return res.status(400).json({ error: "路径只能包含字母、数字、下划线和连字符" })
+    }
+    if (adminPath === "admin") {
+      // 允许恢复默认
+    }
+    
+    const oldPath = process.env.ADMIN_PATH || "admin"
+    
+    // 更新 .env
+    const envPath = path.join(__dirname, '.env')
+    let envContent = await fs.readFile(envPath, 'utf-8')
+    if (envContent.includes('ADMIN_PATH=')) {
+      envContent = envContent.replace(/ADMIN_PATH=.*/, `ADMIN_PATH=${adminPath}`)
+    } else {
+      envContent += `\nADMIN_PATH=${adminPath}`
+    }
+    await fs.writeFile(envPath, envContent)
+    process.env.ADMIN_PATH = adminPath
+    
+    // 前端已改为动态路由，无需修改 router 文件或重新构建
+    res.json({ success: true, message: `后台路径已改为 /${adminPath}，请刷新页面`, newPath: adminPath })
+  } catch (err) {
+    res.status(500).json({ error: "更新失败: " + err.message })
+  }
+});
+
+
+// 保护所有写操作路由
+["/api/photos", "/api/categories", "/api/upload", "/api/upload-temp"].forEach(r => {
+  app.use(r, (req, res, next) => {
+    if (req.method === "GET") return next()
+    authMiddleware(req, res, next)
+  })
+})
 
 // 静态文件服务 - 上传的图片
 app.use('/uploads', express.static(UPLOADS_DIR))

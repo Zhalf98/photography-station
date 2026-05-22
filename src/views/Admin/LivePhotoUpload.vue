@@ -450,6 +450,7 @@ const handleUpload = async () => {
     
     // 上传文件
     const uploadRes = await fetch('/api/upload', {
+      headers: { "Authorization": `Bearer ${localStorage.getItem('admin_token')}` },
       method: 'POST',
       body: formData
     })
@@ -494,7 +495,10 @@ const handleUpload = async () => {
     // 保存
     await fetch('/api/photos', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${localStorage.getItem('admin_token')}` 
+      },
       body: JSON.stringify(photos)
     })
     

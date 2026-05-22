@@ -382,7 +382,10 @@ async function saveEdit() {
   try {
     await fetch(`${API_BASE}/photos`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${localStorage.getItem("admin_token")}` 
+      },
       body: JSON.stringify(photos.value)
     })
     ElMessage.success('保存成功')
@@ -404,6 +407,7 @@ async function deletePhoto(photo) {
     if (index > -1) {
       // 调用 DELETE API，后端会同时删除图片文件
       const res = await fetch(`${API_BASE}/photos/${index}`, {
+      headers: { "Authorization": `Bearer ${localStorage.getItem("admin_token")}` },
         method: 'DELETE'
       }).then(r => r.json())
       

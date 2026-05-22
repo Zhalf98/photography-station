@@ -201,7 +201,10 @@ async function saveCategory() {
   try {
     await fetch(`${API_BASE}/categories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${localStorage.getItem("admin_token")}` 
+      },
       body: JSON.stringify(categories.value)
     })
     ElMessage.success('保存成功')
@@ -230,7 +233,10 @@ async function deleteCategory(index) {
     categories.value.splice(index, 1)
     await fetch(`${API_BASE}/categories`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: { 
+        'Content-Type': 'application/json',
+        "Authorization": `Bearer ${localStorage.getItem("admin_token")}` 
+      },
       body: JSON.stringify(categories.value)
     })
     ElMessage.success('删除成功')

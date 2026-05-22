@@ -11,15 +11,15 @@
 // ============================================================
 export const siteConfig = {
   // 网站名称（同时用于标题后缀、作者等）
-  name: '摄影站',
+  name: 'Zhalf.cc',
   // 建站年份
-  startYear: 2025,
+  startYear: 2026,
   // 网站域名
-  domain: 'https://p.javai.cn',
+  domain: 'https://Zhalf.cc',
   // 网站描述（SEO用）
-  description: '用镜头记录生活的美好瞬间，分享我的摄影作品。每一张照片都是一个故事，一段回忆，一种对生活的感悟。',
+  description: '',
   // 网站关键词（SEO用）
-  keywords: '摄影,个人摄影,生活记录,摄影作品,照片分享,广东摄影,惠州',
+  keywords: '摄影,个人摄影,生活记录,摄影作品,照片分享',
   // 网站Logo路径（同时用于favicon）
   logo: '/logo.png',
   // 备案号（可选，留空则不显示）
@@ -65,24 +65,22 @@ export const pageConfig = {
   about: {
     title: '关于我',
     avatar: '/avatar.png',
-    nickname: '摄影爱好者',
-    bio: '热爱摄影，喜欢用镜头捕捉生活中的美好瞬间。无论是壮丽的风景还是平凡的日常，都值得被记录和分享。',
+    nickname: 'Zhalf',
+    bio: '',
     // 我的故事
     story: [
-      '摄影已经成为我生活中不可或缺的一部分。我享受按下快门的那一刻，以及照片背后反映我对生活的感悟。每一张照片都是一个故事，一段回忆，一种情感的表达。',
-      '从最初的随手拍摄，到现在对光影、构图、色彩的思考，摄影让我学会了用不同的角度去观察世界，去发现生活中那些容易被忽略的美好。',
-      '这个网站是我分享摄影作品的平台，希望通过这些照片，能让更多人感受到生活的美好，也希望能结识更多志同道合的朋友。',
+      '。。。。。。',
     ],
     // 使用的设备
     equipment: [
-      { type: '手机', name: 'vivo X200 Pro' },
-      { type: '手机', name: 'Apple iPhone 15' },
+      { type: '相机', name: 'Nikon Z30' },
+      { type: '手机', name: 'Apple iPhone 15 Pro' },
     ],
   },
   // 联系方式配置（留空则不显示）
   contact: {
-    email: 'xihons@qq.com', // 邮箱地址
-    github: 'https://github.com/lyhxx', // Github链接
+    email: 'echooo@mail.com', // 邮箱地址
+    github: 'https://github.com/Zhalf98', // Github链接
     wechat: '',      // 微信二维码图片链接
     weibo: '',       // 微博主页链接
     xiaohongshu: '', // 小红书主页链接

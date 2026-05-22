@@ -1,4 +1,4 @@
-# robots.txt for https://p.javai.cn/
+# robots.txt for https://Zhalf.cc/
 
 User-agent: *
 Allow: /
@@ -7,7 +7,7 @@ Allow: /
 Disallow: /admin
 
 # 网站地图
-Sitemap: https://p.javai.cn/sitemap.xml
+Sitemap: https://Zhalf.cc/sitemap.xml
 
 # 抓取延迟（可选，单位：秒）
 Crawl-delay: 1

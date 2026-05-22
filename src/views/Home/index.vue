@@ -29,11 +29,8 @@
           <!-- 左上角 LIVE 图标 -->
           <div v-if="photo.is_live_photo" class="live-indicator">
             <svg width="18" height="18" viewBox="0 0 32 32" fill="none">
-              <!-- 外围虚线圆 -->
               <circle cx="16" cy="16" r="14" stroke="currentColor" stroke-width="2" stroke-dasharray="2 2"/>
-              <!-- 中间实心圆 -->
               <circle cx="16" cy="16" r="8" stroke="currentColor" stroke-width="2"/>
-              <!-- 中心点 -->
               <circle cx="16" cy="16" r="3" fill="currentColor"/>
             </svg>
           </div>
@@ -63,7 +60,6 @@
 import { ref, onMounted } from 'vue'
 import PhotoModal from '../../components/PhotoModal.vue'
 import LazyImage from '../../components/LazyImage.vue'
-import { photoGallery } from '../../data/photos.js'
 import { useSEO } from '../../composables/useSEO.js'
 
 export default {
@@ -76,13 +72,20 @@ export default {
     const { setTitle, setDescription, setKeywords, setCanonical } = useSEO()
     
     const selectedPhoto = ref(null)
-    const photos = ref(photoGallery)
+    const photos = ref([])
 
-    onMounted(() => {
+    onMounted(async () => {
       setTitle('')
       setDescription('用镜头记录生活的美好瞬间，分享我的摄影作品。')
       setKeywords('摄影,照片,生活记录,摄影作品')
       setCanonical('/')
+      
+      try {
+        const res = await fetch('/api/photos')
+        photos.value = await res.json()
+      } catch (e) {
+        console.error('Failed to load photos:', e)
+      }
     })
 
     const openPhotoModal = (photo) => selectedPhoto.value = photo
@@ -121,7 +124,6 @@ export default {
   margin-bottom: 1.5rem;
 }
 
-/* 左上角 LIVE 同心圆图标 */
 .live-indicator {
   position: absolute;
   top: 12px;
@@ -149,17 +151,10 @@ export default {
 }
 
 @keyframes pulse {
-  0%, 100% { 
-    opacity: 1;
-    transform: scale(1);
-  }
-  50% { 
-    opacity: 0.7;
-    transform: scale(0.95);
-  }
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.7; transform: scale(0.95); }
 }
 
-/* 深色模式 */
 @media (prefers-color-scheme: dark) {
   .live-indicator {
     background: rgba(28, 28, 30, 0.95);
@@ -167,7 +162,6 @@ export default {
   }
 }
 
-/* 标题右侧标签 */
 .badge {
   padding: 3px 8px;
   border-radius: 4px;
@@ -175,24 +169,12 @@ export default {
   font-weight: 600;
   letter-spacing: 0.3px;
   white-space: nowrap;
-  transition: all 0.2s ease;
 }
 
-.badge-live {
-  background: var(--text-tertiary);
-  color: white;
-}
+.badge-live { background: var(--text-tertiary); color: white; }
+.badge-hdr { background: #ffcc00; color: #1d1d1f; }
 
-.badge-hdr {
-  background: #ffcc00;
-  color: #1d1d1f;
-}
-
-/* 深色模式 */
 @media (prefers-color-scheme: dark) {
-  .badge-live {
-    background: rgba(255, 255, 255, 0.2);
-    color: var(--text-primary);
-  }
+  .badge-live { background: rgba(255, 255, 255, 0.2); color: var(--text-primary); }
 }
 </style>
