@@ -14,7 +14,7 @@
 
 > 一个现代化的个人摄影作品展示网站，基于 Vue 3 + Vite 构建，支持 Live Photo、HDR 照片、EXIF 自动读取、响应式设计、深色模式。
 
-🌐 **演示地址**: [https://p.javai.cn/](https://p.javai.cn/)
+🌐 **演示地址**: [https://zhalf.cc)
 
 ---
 
